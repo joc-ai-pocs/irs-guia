@@ -1,0 +1,1 @@
+Para contribuintes com rendimentos de cat. A e/ou Pensão, os 4 462,15 € aplicam-se por contribuinte. A imputação do Anexo D (transparência fiscal) é considerada cat. B — tem deduções específicas diferentes, previstas no [art. 31.º do CIRS](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs31.aspx).

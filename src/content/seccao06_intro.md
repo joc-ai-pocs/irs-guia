@@ -1,0 +1,1 @@
+A calculadora interativa vive na sua própria tab para ter o ecrã todo: vês os inputs, o desdobramento linha-a-linha estilo nota de liquidação, e a barra dos escalões a destacar em tempo real o teu escalão — tudo junto, sem trocar de tab.

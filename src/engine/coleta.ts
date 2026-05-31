@@ -57,6 +57,49 @@ export function calcularColetaMetodo3(
 }
 
 /**
+ * Computes the collection by Method 1 (didactic) — split the taxable income
+ * into two parts: the upper limit of the PREVIOUS bracket (taxed at that
+ * bracket's "taxa média"), plus the excess (taxed at the current bracket's
+ * "taxa normal" marginal rate).
+ *
+ *   coleta = limiteAnterior × taxaMédiaAnterior + (coletável − limiteAnterior) × taxaNormalAtual
+ *
+ * For the 1st bracket the "previous limit" is 0 and the result collapses to
+ * coletável × taxaNormal. The result may differ from method 3 by a few cents
+ * due to rounding in the official `taxaMedia` values.
+ *
+ * @param coletavel taxable income in euros (after quociente familiar division)
+ * @param config the fiscal year configuration
+ * @returns detailed breakdown including both parcels
+ */
+export function calcularColetaMetodo1(
+  coletavel: number,
+  config: TaxYearConfig,
+): {
+  readonly escalao: Escalao;
+  readonly limiteAnterior: number;
+  readonly taxaMediaAnterior: number;
+  readonly parcela1: number;
+  readonly excedente: number;
+  readonly parcela2: number;
+  readonly coleta: number;
+} {
+  const escalao = findEscalao(coletavel, config.escaloes);
+  const escaloesAnteriores = config.escaloes.filter((e) => e.numero < escalao.numero);
+  const anterior = escaloesAnteriores[escaloesAnteriores.length - 1];
+
+  const limiteAnterior = anterior?.limiteSuperior ?? 0;
+  const taxaMediaAnterior = anterior?.taxaMedia ?? 0;
+
+  const parcela1 = limiteAnterior * taxaMediaAnterior;
+  const excedente = Math.max(0, coletavel - limiteAnterior);
+  const parcela2 = excedente * escalao.taxaNormal;
+  const coleta = parcela1 + parcela2;
+
+  return { escalao, limiteAnterior, taxaMediaAnterior, parcela1, excedente, parcela2, coleta };
+}
+
+/**
  * Computes the collection by Method 2 (didactic) — slice the income across
  * brackets and apply each bracket's marginal rate to its slice.
  *

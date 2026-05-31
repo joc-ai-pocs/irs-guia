@@ -1,0 +1,1 @@
+Para a decisão de submissão, usa sempre o **simulador oficial** no Portal das Finanças (Serviços → IRS → Simular IRS). Ele tem as deduções à coleta apuradas pela AT já carregadas, integração com todos os anexos, e atualização automática da tabela.

@@ -1,0 +1,6 @@
+- Taxa autónoma por defeito: **25%** sobre rendas líquidas (rendas brutas − despesas dedutíveis)
+- Reduções por contrato longa duração: **15%** (5-9 anos), **10%** (10-19 anos), **5%** (20+ anos)
+- Para reduções: contrato tinha de ser comunicado à AT até **16 de fevereiro de 2026**
+- Despesas dedutíveis ([art. 41.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs41.aspx)): IMI, condomínio, seguros, obras de conservação 24m antes do arrendamento, AIMI
+- Inquilino = empresa? Houve **retenção na fonte 25%** — declarar no quadro 6 do Anexo F com o NIF do retentor
+- Englobar pode compensar se o escalão marginal for inferior a 25% (pensionistas com pensão baixa) — base legal: [art. 72.º CIRS](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs72.aspx)

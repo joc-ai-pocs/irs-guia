@@ -1,0 +1,156 @@
+.bracket-bar {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  padding: var(--sp-6);
+  margin: var(--sp-6) 0;
+  border-radius: var(--r-3);
+}
+
+.bracket-bar__caption {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--sp-2);
+}
+
+.bracket-bar__bar {
+  position: relative;
+  display: flex;
+  height: 80px;
+  margin: var(--sp-7) 0 var(--sp-5);
+  border-radius: var(--r-2);
+  overflow: visible;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.bracket-bar__seg {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.7);
+  transition: transform var(--t-medium), filter var(--t-medium), box-shadow var(--t-medium);
+  cursor: pointer;
+  border-right: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.bracket-bar__seg:last-child { border-right: none; }
+
+.bracket-bar__seg[data-escalao="1"] { background: var(--grid-1); }
+.bracket-bar__seg[data-escalao="2"] { background: var(--grid-2); }
+.bracket-bar__seg[data-escalao="3"] { background: var(--grid-3); }
+.bracket-bar__seg[data-escalao="4"] { background: var(--grid-4); }
+.bracket-bar__seg[data-escalao="5"] { background: var(--grid-5); color: #fff; }
+.bracket-bar__seg[data-escalao="6"] { background: var(--grid-6); color: #fff; }
+.bracket-bar__seg[data-escalao="7"] { background: var(--grid-7); color: #fff; }
+.bracket-bar__seg[data-escalao="8"] { background: var(--grid-8); color: #fff; }
+.bracket-bar__seg[data-escalao="9"] { background: var(--grid-9); color: #fff; }
+
+.bracket-bar__seg--active {
+  transform: scaleY(1.15);
+  z-index: 2;
+  filter: brightness(1.05);
+  box-shadow: 0 0 0 3px var(--ink), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.bracket-bar__seg-label {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.bracket-bar__seg-limit {
+  position: absolute;
+  bottom: -22px;
+  right: 0;
+  transform: translateX(50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.bracket-bar__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: var(--sp-7);
+}
+
+.bracket-bar__table th {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 500;
+  padding: var(--sp-3);
+  text-align: left;
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.bracket-bar__th-right { text-align: right !important; }
+
+.bracket-bar__table td {
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+
+.bracket-bar__row--active {
+  background: var(--brick-soft);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bracket-bar__row--active td:first-child {
+  border-left: 4px solid var(--brick);
+  padding-left: var(--sp-4);
+}
+
+.bracket-bar__range {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.bracket-bar__tax {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-align: right;
+}
+
+.bracket-bar__dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.bracket-bar__dot[data-dot="1"] { background: var(--grid-1); }
+.bracket-bar__dot[data-dot="2"] { background: var(--grid-2); }
+.bracket-bar__dot[data-dot="3"] { background: var(--grid-3); }
+.bracket-bar__dot[data-dot="4"] { background: var(--grid-4); }
+.bracket-bar__dot[data-dot="5"] { background: var(--grid-5); }
+.bracket-bar__dot[data-dot="6"] { background: var(--grid-6); }
+.bracket-bar__dot[data-dot="7"] { background: var(--grid-7); }
+.bracket-bar__dot[data-dot="8"] { background: var(--grid-8); }
+.bracket-bar__dot[data-dot="9"] { background: var(--grid-9); }
+
+@media (max-width: 720px) {
+  .bracket-bar__bar { height: 60px; }
+  .bracket-bar__seg-limit { display: none; }
+  .bracket-bar { padding: var(--sp-4); }
+  .bracket-bar__table { font-size: 12px; }
+}

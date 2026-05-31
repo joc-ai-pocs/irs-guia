@@ -1,0 +1,1 @@
+A parcela a abater não é arbitrária. É o valor que *já está incluído* na coleta se aplicasses a taxa normal ao rendimento todo, em vez de fatiar. Por exemplo, no 2.º escalão: 282,07 € = 8 059 × (16% − 12,5%) — é a "diferença" que a taxa marginal cobraria a mais sobre a fatia do 1.º escalão se não houvesse a parcela a abater. É um truque matemático que evita ter que fatiar.

@@ -1,0 +1,74 @@
+.md {
+  display: block;
+}
+
+.md p {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin-bottom: var(--sp-4);
+  max-width: 640px;
+}
+
+.md.intro p {
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--ink);
+  max-width: 680px;
+}
+
+.md p:last-child { margin-bottom: 0; }
+
+.md strong { color: var(--ink); font-weight: 600; }
+
+.md em {
+  font-style: italic;
+}
+
+.md em.term {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--brick-deep);
+  border-bottom: 1px dotted var(--brick);
+  cursor: help;
+}
+
+.md a {
+  color: var(--brick);
+  text-decoration: none;
+  border-bottom: 1px solid var(--brick-soft);
+  font-weight: 500;
+  transition: border-color var(--t-fast), color var(--t-fast);
+}
+
+.md a:hover {
+  color: var(--brick-deep);
+  border-bottom-color: var(--brick);
+}
+
+.md a[href^="http"]::after {
+  content: '↗';
+  font-size: 0.7em;
+  margin-left: 2px;
+  vertical-align: super;
+  opacity: 0.7;
+}
+
+.md ul, .md ol {
+  margin: 0 0 var(--sp-4) var(--sp-5);
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.65;
+  max-width: 640px;
+}
+
+.md li { margin-bottom: var(--sp-2); }
+
+.md code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--paper-2);
+  padding: 1px 5px;
+  border-radius: var(--r-1);
+}

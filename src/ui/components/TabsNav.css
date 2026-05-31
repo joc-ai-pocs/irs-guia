@@ -1,0 +1,48 @@
+.tabs-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--sp-7);
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 100;
+  padding-top: var(--sp-4);
+  overflow-x: auto;
+}
+
+.tabs-nav__btn {
+  padding: var(--sp-4) var(--sp-5);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color var(--t-fast), border-bottom-color var(--t-fast);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.tabs-nav__btn:hover { color: var(--ink); }
+
+.tabs-nav__btn--active {
+  color: var(--brick);
+  border-bottom-color: var(--brick);
+}
+
+.tabs-pane {
+  animation: tabsFadeIn 0.3s ease;
+}
+
+@keyframes tabsFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .tabs-nav__btn { padding: var(--sp-3) var(--sp-4); }
+}

@@ -1,0 +1,1 @@
+Cada escalão tem **duas taxas**. A <em class="term">taxa normal (marginal)</em> aplica-se à *fatia* de rendimento que cai dentro daquele escalão. A <em class="term">taxa média</em> aplica-se ao limite superior do escalão imediatamente anterior — é a taxa "acumulada" desde 0 €. Os métodos 1 e 2 usam taxa média; o método 3 usa taxa normal com parcela a abater.

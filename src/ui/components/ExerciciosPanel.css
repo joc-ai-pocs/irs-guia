@@ -1,0 +1,199 @@
+.exercicios-panel {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  padding: var(--sp-5);
+  margin: var(--sp-6) 0;
+}
+
+.exercicios-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--sp-4);
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exercicios-panel__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--brick);
+  font-weight: 600;
+}
+
+.exercicios-panel__status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.05em;
+}
+
+.exercicios-panel__empty {
+  padding: var(--sp-3) 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.exercicios-panel__empty p { margin-bottom: var(--sp-3); max-width: 640px; }
+.exercicios-panel__hint { font-size: 13px; color: var(--ink-faint); }
+.exercicios-panel__empty code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--paper);
+  padding: 1px 5px;
+  border-radius: var(--r-1);
+}
+
+.exercicios-panel__empty-list {
+  padding: var(--sp-4) var(--sp-3);
+  font-size: 13px;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.exercicios-panel__primary {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--brick);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+
+.exercicios-panel__primary:hover { background: var(--brick-deep); }
+
+.exercicios-panel__body { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.exercicios-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.exercicios-panel__action {
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--brick);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+
+.exercicios-panel__action:hover { background: var(--brick-deep); }
+.exercicios-panel__action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--brick);
+}
+
+.exercicios-panel__action--secondary {
+  background: transparent;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+}
+
+.exercicios-panel__action--secondary:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.exercicios-panel__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exercicios-panel__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--paper);
+  border: 1px solid transparent;
+  border-radius: var(--r-1);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+
+.exercicios-panel__item:hover { border-color: var(--rule); }
+
+.exercicios-panel__item--active {
+  border-color: var(--brick);
+  background: var(--brick-soft);
+}
+
+.exercicios-panel__item-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.exercicios-panel__item-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.exercicios-panel__item-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}
+
+.exercicios-panel__item-controls {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.exercicios-panel__icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+
+.exercicios-panel__icon:hover {
+  background: var(--brick);
+  color: #fff;
+  border-color: var(--brick);
+}

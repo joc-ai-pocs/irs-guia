@@ -1,0 +1,33 @@
+.guide-section {
+  margin-bottom: var(--sp-9);
+  scroll-margin-top: var(--sp-8);
+}
+
+.guide-section__num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--brick);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--sp-3);
+}
+
+.guide-section__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin-bottom: var(--sp-5);
+  max-width: 800px;
+  color: var(--ink);
+}
+
+.guide-section__title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--brick);
+}
+
+@media (max-width: 720px) {
+  .guide-section__title { font-size: 28px; }
+}

@@ -1,0 +1,7 @@
+- **16 fev 2026**: prazo para comunicar contratos de arrendamento à AT (senhorios) — essencial para reduções de taxa
+- **31 mar 2026**: prazo para reclamar de despesas no e-fatura
+- **1 abr – 30 jun 2026**: prazo de entrega da Modelo 3 (online, exclusivamente)
+- **Após 15 abr**: data recomendada para submeter (evita bugs do formulário nos primeiros dias)
+- **31 jul 2026**: AT emite notas de liquidação para declarações entregues no prazo
+- **31 ago 2026**: prazo de pagamento (se houver imposto a pagar) e prazo limite para reembolsos
+- Fonte oficial: [Folheto AT — Principais prazos IRS 2026 (PDF)](https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Documents/IRS_2025_Principais_prazos_2026.pdf)

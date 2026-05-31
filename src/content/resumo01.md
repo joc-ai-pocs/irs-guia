@@ -1,0 +1,5 @@
+- **Rendimento bruto** menos **dedução específica** = <a href="#vista-geral" data-tab="guia">rendimento coletável</a>
+- Coletável encaixa-se num dos 9 <a href="#escaloes" data-tab="guia">escalões progressivos</a>
+- Aplica-se a fórmula: `Coletável × taxa normal − parcela a abater` = **coleta total** — <a href="#metodos" data-tab="guia">ver os 3 métodos</a>
+- Coleta menos **deduções à coleta** (saúde, educação, e-fatura) e **benefício municipal** = coleta líquida
+- Coleta líquida menos **retenções na fonte** = <a href="#nota-liquidacao" data-tab="guia">imposto apurado</a> (positivo = pagar, negativo = receber)
