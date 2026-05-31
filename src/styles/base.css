@@ -1,0 +1,103 @@
+/**
+ * Base styles — reset + body + typography fundamentals.
+ *
+ * Component-specific styles live in src/ui/components/*.css and are
+ * imported by their respective TS modules.
+ */
+
+@import './tokens.css';
+
+/* ─────────── reset ─────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.65;
+  font-size: 16px;
+  background-image:
+    radial-gradient(ellipse at 15% 10%, rgba(168, 53, 26, 0.035), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(31, 24, 21, 0.04), transparent 55%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, svg { display: block; max-width: 100%; }
+button { font: inherit; cursor: pointer; }
+a { color: inherit; }
+
+/* ─────────── page shell ─────────── */
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--sp-9) var(--sp-6);
+  position: relative;
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  top: var(--sp-9);
+  bottom: var(--sp-9);
+  left: 8px;
+  width: 1px;
+  background: var(--rule);
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .page { padding: var(--sp-7) var(--sp-5); }
+  .page::before { display: none; }
+}
+
+/* ─────────── typography utilities ─────────── */
+.body p {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin-bottom: var(--sp-4);
+  max-width: 640px;
+}
+
+.body p strong { color: var(--ink); font-weight: 600; }
+
+.body p em.term {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--brick-deep);
+  border-bottom: 1px dotted var(--brick);
+  cursor: help;
+}
+
+.body p a.ref {
+  color: var(--brick);
+  text-decoration: none;
+  border-bottom: 1px solid var(--brick-soft);
+  font-weight: 500;
+  transition: border-color var(--t-fast), color var(--t-fast);
+}
+
+.body p a.ref:hover {
+  color: var(--brick-deep);
+  border-bottom-color: var(--brick);
+}
+
+.body p a.ref::after {
+  content: '↗';
+  font-size: 0.7em;
+  margin-left: 2px;
+  vertical-align: super;
+  opacity: 0.7;
+}

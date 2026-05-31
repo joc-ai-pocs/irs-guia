@@ -1,0 +1,57 @@
+/**
+ * IRS Guia — Design tokens (Direction A: Editorial sóbrio)
+ *
+ * Single source of truth for colors, spacing, type scale, and radii.
+ * No magic numbers should appear in component CSS — only references to
+ * these variables. Same applies to colors in TS components (use the
+ * CSS variable, not the literal hex).
+ */
+
+:root {
+  /* ─────────── surfaces ─────────── */
+  --paper:        #f5efe2;
+  --paper-2:      #ede5d2;
+  --paper-3:      #e6dcc4;
+
+  /* ─────────── ink ─────────── */
+  --ink:          #1f1815;
+  --ink-soft:     #4a3f38;
+  --ink-faint:    #8a7d72;
+
+  /* ─────────── structure ─────────── */
+  --rule:         #d4c8b1;
+  --rule-strong:  #b8a787;
+
+  /* ─────────── accents ─────────── */
+  --brick:        #a8351a;
+  --brick-deep:   #6d1f0c;
+  --brick-soft:   #e8c9b8;
+  --gold:         #b08d3e;
+  --ok:           #2d5a2d;
+  --warn:         #a8351a;
+
+  /* ─────────── spacing (4px base, harmonic) ─────────── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+
+  /* ─────────── radii ─────────── */
+  --r-1: 2px;
+  --r-2: 3px;
+  --r-3: 4px;
+
+  /* ─────────── type ─────────── */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* ─────────── transitions ─────────── */
+  --t-fast:   150ms ease;
+  --t-medium: 250ms ease;
+}

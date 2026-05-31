@@ -1,0 +1,45 @@
+.callout {
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: var(--sp-4) var(--sp-5);
+  margin: var(--sp-5) 0;
+  border-radius: var(--r-2);
+  position: relative;
+}
+
+.callout__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--brick);
+  margin-bottom: var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.callout__title::before {
+  content: '§';
+  font-style: normal;
+  font-weight: 600;
+  color: var(--brick);
+  font-size: 14px;
+}
+
+.callout__body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink);
+  margin: 0;
+}
+
+.callout__body + .callout__body { margin-top: var(--sp-3); }
+
+.callout__body em.term {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--brick-deep);
+  border-bottom: 1px dotted var(--brick);
+}
