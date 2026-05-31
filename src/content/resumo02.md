@@ -1,0 +1,6 @@
+- `1º` Até **8 059 €** → taxa 12,5% (sem parcela a abater) — <a href="#escaloes" data-tab="guia">ver tabela</a>
+- `2º` 8 059 – 12 160 € → taxa 16% — parcela 282,07 €
+- `3º` 12 160 – 17 233 € → taxa 21,5% — parcela 950,91 €
+- `4º–9º` escalões intermédios e altos: até 48% para rendimentos superiores a 83 696 € — <a href="#escaloes" data-tab="guia">ver tabela completa</a>
+- Tabela atualizada pela **Lei n.º 55-A/2025, de 22/07** — [consultar no Portal das Finanças](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs68ra_202512.aspx)
+- Para **rendimentos de 2026** (declarados em 2027), há nova tabela com taxas ainda mais baixas (Lei 73-A/2025) — [ver no Portal das Finanças](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx)

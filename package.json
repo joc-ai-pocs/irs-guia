@@ -15,9 +15,13 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@types/wicg-file-system-access": "^2023.10.7",
     "@vitest/ui": "^1.2.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.12",
     "vitest": "^1.2.0"
+  },
+  "dependencies": {
+    "marked": "^18.0.4"
   }
 }

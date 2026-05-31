@@ -1,0 +1,5 @@
+- **Mãe** (cat. A + Pensão) → Rosto + Anexo A (+ H se houver despesas extras) — possivelmente elegível ao [IRS Automático](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/IRS_automatico/Paginas/default.aspx)
+- **Padrasto** (Pensão + Rendas) → Rosto + Anexo A + Anexo F — NÃO elegível ao Automático
+- **Namorada** (cat. A + Rendas com retenção) → Rosto + Anexo A + Anexo F — atenção às retenções na fonte 25%
+- **Zé** (cat. A + transparência fiscal) → Rosto + Anexo A + Anexo D — pedir valor da matéria coletável ao contabilista
+- Modelo 3 e anexos: [página oficial da AT](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Modelo_3/Paginas/default.aspx)

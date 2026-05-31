@@ -1,0 +1,1 @@
+Isto explica também porque é que a **taxa média efetiva** que cada um paga é sempre menor que a taxa marginal do seu escalão. No exemplo acima: 2 413,89 / 15 650 = **15,4%**, embora a taxa marginal seja 21,5%.

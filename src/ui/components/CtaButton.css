@@ -1,0 +1,31 @@
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--brick);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast), transform var(--t-fast);
+  margin: var(--sp-4) 0;
+}
+
+.cta-button:hover {
+  background: var(--brick-deep);
+  transform: translateY(-1px);
+}
+
+.cta-button__arrow {
+  font-size: 14px;
+  display: inline-block;
+  transition: transform var(--t-fast);
+}
+
+.cta-button:hover .cta-button__arrow { transform: translateX(2px); }

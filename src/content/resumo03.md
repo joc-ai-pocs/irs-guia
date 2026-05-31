@@ -1,0 +1,5 @@
+- **Método 1**: dividir em parcela 1 (limite anterior × taxa média) + parcela 2 (excedente × taxa normal) — <a href="#metodos" data-tab="guia">ver exemplo</a>
+- **Método 2**: fatiar pelos vários escalões e somar (mais didático, mais trabalhoso) — <a href="#fatias" data-tab="guia">ver visualização</a>
+- **Método 3** (usado pela AT): `Coletável × taxa normal do escalão − parcela a abater`
+- Os três dão o mesmo resultado, com pequenas diferenças de arredondamento (cêntimos)
+- Base legal: n.º 2 do [artigo 68.º do CIRS](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs68ra_202512.aspx)

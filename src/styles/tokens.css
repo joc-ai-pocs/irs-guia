@@ -54,4 +54,15 @@
   /* ─────────── transitions ─────────── */
   --t-fast:   150ms ease;
   --t-medium: 250ms ease;
+
+  /* ─────────── bracket gradient (9 steps from light cream to deep brick) ─────────── */
+  --grid-1: #fff8e1;
+  --grid-2: #ffecc1;
+  --grid-3: #ffd394;
+  --grid-4: #ffb066;
+  --grid-5: #ff8a3d;
+  --grid-6: #e86a1f;
+  --grid-7: #c54a10;
+  --grid-8: #9a3208;
+  --grid-9: #6e1f04;
 }

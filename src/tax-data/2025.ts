@@ -39,10 +39,30 @@ export const config2025: TaxYearConfig = {
   ],
 
   fontes: {
+    cirsIndice: {
+      id: 'cirsIndice',
+      label: 'Código do IRS (CIRS) — índice geral',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/codigo-do-irs-indice.aspx',
+    },
     art68: {
       id: 'art68',
       label: 'Art. 68.º CIRS — redação para rendimentos de 2025',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs68ra_202512.aspx',
+    },
+    art68_2026: {
+      id: 'art68_2026',
+      label: 'Art. 68.º CIRS — redação para rendimentos de 2026 (Lei 73-A/2025)',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx',
+    },
+    art20: {
+      id: 'art20',
+      label: 'Art. 20.º CIRS — Transparência fiscal',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs20.aspx',
+    },
+    art31: {
+      id: 'art31',
+      label: 'Art. 31.º CIRS — Dedução específica cat. B (regime simplificado)',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs31.aspx',
     },
     art25: {
       id: 'art25',
@@ -93,6 +113,66 @@ export const config2025: TaxYearConfig = {
       id: 'lei55A',
       label: 'Lei n.º 55-A/2025, de 22/07 (PDF oficial)',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Lei_55_A_2025.pdf',
+    },
+    lei45A: {
+      id: 'lei45A',
+      label: 'Lei n.º 45-A/2024 — OE 2025 (PDF oficial)',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Lei_45_A_2024.pdf',
+    },
+    lei73A: {
+      id: 'lei73A',
+      label: 'Lei n.º 73-A/2025 — OE 2026 (PDF oficial)',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Lei_73_A_2025.pdf',
+    },
+    modelo3: {
+      id: 'modelo3',
+      label: 'Modelo 3 do IRS — Portal das Finanças',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Modelo_3/Paginas/default.aspx',
+    },
+    irsAutomatico: {
+      id: 'irsAutomatico',
+      label: 'IRS Automático — Portal das Finanças',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/IRS_automatico/Paginas/default.aspx',
+    },
+    prazos2026: {
+      id: 'prazos2026',
+      label: 'Folheto AT — Principais prazos IRS 2026 (PDF)',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Documents/IRS_2025_Principais_prazos_2026.pdf',
+    },
+    folhetosAT: {
+      id: 'folhetosAT',
+      label: 'Folhetos informativos AT',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Pages/default.aspx',
+    },
+    decoNota: {
+      id: 'decoNota',
+      label: 'Descodificar a nota de liquidação — DECO PROTeste',
+      url: 'https://www.deco.proteste.pt/dinheiro/impostos/noticias/descodifique-nota-liquidacao-irs',
+    },
+    decoPreencher: {
+      id: 'decoPreencher',
+      label: 'IRS — preencher passo a passo — DECO PROTeste',
+      url: 'https://www.deco.proteste.pt/dinheiro/impostos/dicas/irs-ajudamos-preencher-passo-a-passo',
+    },
+    doutorFinancas: {
+      id: 'doutorFinancas',
+      label: 'Calendário IRS 2026 completo — Doutor Finanças',
+      url: 'https://www.doutorfinancas.pt/impostos/irs/calendario-irs-2026-os-prazos-para-evitar-coimas-e-perder-deducoes/',
+    },
+    montepio: {
+      id: 'montepio',
+      label: 'Escalões de IRS — Montepio',
+      url: 'https://www.montepio.org/ei/mais-recentes/escaloes-de-irs-sabe-qual-e-o-seu/',
+    },
+    santander: {
+      id: 'santander',
+      label: 'Como funcionam os escalões — Santander Salto',
+      url: 'https://www.santander.pt/salto/escaloes-irs',
+    },
+    cgdSaldo: {
+      id: 'cgdSaldo',
+      label: 'Escalões vs tabelas de retenção — CGD Saldo Positivo',
+      url: 'https://www.cgd.pt/Site/Saldo-Positivo/leis-e-impostos/Pages/diferenca-entre-escaloes-de-irs-e-tabelas-de-irs.aspx',
     },
     ias: {
       id: 'ias',

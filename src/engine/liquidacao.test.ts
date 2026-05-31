@@ -3,7 +3,10 @@ import { config2025 } from '@/tax-data/2025';
 import { calcularLiquidacao } from './liquidacao';
 
 describe('calcularLiquidacao — full settlement note pipeline', () => {
-  it('produces a sensible reembolso scenario (typical cat. A salário médio)', () => {
+  it('reproduces the canonical pedagogical example (small balance to pay)', () => {
+    // These are the inputs used in the demo at main.ts and in the HTML guide's
+    // calculator. They yield a SMALL amount to pay (~ 9,60 €) — not a reembolso —
+    // and exist to exercise the full pipeline against a known reference.
     const result = calcularLiquidacao(
       {
         rendimentoBruto: 14135.53,
@@ -17,14 +20,34 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
     // line 06: coletável = 14 135,53 − 4 462,15 = 9 673,38
     expect(result.rendimentoColetavel).toBeCloseTo(9673.38, 2);
 
-    // Falls into the 2nd bracket (8 059 < 9 673,38 ≤ 12 160)
+    // Falls into the 2nd bracket (8 059 < 9 673,38 ≤ 12 160).
     expect(result.coleta.escalao.numero).toBe(2);
 
     // line 18: coleta = 9 673,38 × 0,16 − 282,07 = 1 265,67
     expect(result.coletaTotal).toBeCloseTo(1265.67, 2);
 
-    // line 25: imposto apurado deve ser negativo (reembolso) — retenção > coleta líquida
+    // line 22: coleta líquida = 1 265,67 − 275,41 − (1 265,67 × 1%) = 977,60
+    expect(result.coletaLiquida).toBeCloseTo(977.6, 2);
+
+    // line 25: imposto apurado = 977,60 − 968 = +9,60 €  (a pagar)
+    expect(result.impostoApurado).toBeCloseTo(9.6, 2);
+  });
+
+  it('produces a true reembolso when retenção exceeds coleta líquida', () => {
+    // Same gross income as the canonical example, but with a higher retention
+    // (1 500 €) — the contributor over-withheld and should receive money back.
+    const result = calcularLiquidacao(
+      {
+        rendimentoBruto: 14135.53,
+        retencaoFonte: 1500,
+      },
+      config2025,
+    );
+
+    // Coleta líquida = coleta total = 1 265,67 (no deductions to coleta given).
+    // line 25 = 1 265,67 − 1 500 = −234,33 € → reembolso.
     expect(result.impostoApurado).toBeLessThan(0);
+    expect(result.impostoApurado).toBeCloseTo(-234.33, 2);
   });
 
   it('respects the quociente familiar in joint taxation', () => {

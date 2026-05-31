@@ -1,58 +1,65 @@
-# irs-guia
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
 
 Guia pedagógico interativo do IRS português. Vanilla TypeScript + Vite, sem framework.
 
-## Comandos
+## Commands
 
 - `npm run dev` — Vite dev server (http://localhost:5173)
 - `npm test` — Vitest watch mode
 - `npm run test:run` — single run, CI-style
+- `npm run test:run -- src/engine/coleta.test.ts` — run a single test file
 - `npm run typecheck` — `tsc --noEmit`
-- `npm run build` — production build to `dist/`
+- `npm run build` — production build to `dist/` (runs typecheck first)
+- `npm run test:ui` — Vitest UI dashboard
 
-## Arquitetura — LER ANTES DE EDITAR
+## Architecture — READ BEFORE EDITING
 
-Três camadas com **regra inviolável**: a UI nunca contém constantes fiscais nem fórmulas. Toda a aritmética vive no engine; todas as constantes vivem em `tax-data/`.
+Three layers with an **inviolable rule**: UI never contains tax constants or formulas. All arithmetic lives in engine; all constants live in `tax-data/`.
 
 ```
-tax-data/   →  configuração fiscal por ano (escalões, IAS, deduções)
-engine/     →  funções puras, sem DOM (cálculos)
-ui/         →  componentes vanilla TS + CSS irmão (apresentação)
+src/tax-data/   →  fiscal config per year (brackets, IAS, deductions, official sources)
+src/engine/     →  pure functions, no DOM (calculations)
+src/ui/         →  vanilla TS components + sibling CSS (presentation)
 ```
 
-- `src/tax-data/` — adicionar novo ano: criar `<ano>.ts` satisfazendo `TaxYearConfig`, registar em `index.ts`.
-- `src/engine/` — funções puras. Testes vitest ao lado (`*.test.ts`). NÃO escrever testes de UI.
-- `src/ui/` — componentes em `src/ui/components/<Nome>.{ts,css}`. Usar helpers de `dom.ts` (`h`, `fragment`, `mount`). Apenas variáveis CSS de `tokens.css` — nenhum hex literal.
+### tax-data
 
-## Convenções
+- Each year is a file (`2025.ts`, `2026.ts`) satisfying the `TaxYearConfig` interface, registered in `index.ts`.
+- `TaxYearConfig` is the contract between data and engine: brackets (`Escalao[]`), IAS, deductions, and `fontes` (indexed map of official source URLs).
+- `requireFonte(config, id)` is the canonical way to access official sources — returns non-nullable `FonteOficial` (needed because of `noUncheckedIndexedAccess`).
+- `getTaxYearConfig(year)` retrieves a year's config from the `TAX_YEARS` registry.
 
-- TypeScript em strict máximo: `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`. Não relaxar.
-- Tipos explícitos na API pública de cada módulo.
-- `requireFonte(config, id)` é a forma canónica de aceder a fontes oficiais — devolve `FonteOficial` não-nullable.
-- Path alias `@/*` aponta para `src/*`.
-- Componentes exportados via barrel em `src/ui/components/index.ts`.
-- Formatação de valores: usar `formatEUR` / `formatPercent` de `@/ui/format` (pt-PT).
+### engine
 
-## Workflow
+- Pure functions only, no DOM. Tests live alongside code (`*.test.ts`). Do NOT write UI tests.
+- **Pipeline**: `calcularLiquidacao(input, config)` → gross income → specific deduction → taxable income → bracket lookup → coleta → deductions → final tax.
+- **Two coleta methods**: Method 3 (`calcularColetaMetodo3`) is canonical (single bracket, parcela a abater). Method 2 (`calcularColetaMetodo2`) slices income across all brackets (for pedagogical visualization).
+- `findEscalao(coletavel, escaloes)` locates the applicable bracket.
 
-- **Mudança de código existente** → editar diretamente aqui.
-- **Componente visual novo com exploração** → primeiro Artifact no claude.ai (estética/variantes), depois trazer para o repo.
-- Antes de implementar feature, ler ficheiros tocados e correr `npm test` + `npm run typecheck` para confirmar estado verde.
-- Pequenos commits por unidade de mudança (uma feature, um fix). Mensagens em imperativo, inglês.
+### ui
 
-## Estado atual
+- Components in `src/ui/components/<Name>.{ts,css}`. Each exports a function returning `HTMLElement`.
+- DOM helpers in `dom.ts`: `h(tag, attrs, ...children)`, `fragment(...)`, `mount(host, root)`, `html(trustedMarkup)`.
+- Only CSS variables from `src/styles/tokens.css` — no hex literals.
+- Formatting: use `formatEUR` / `formatPercent` from `@/ui/format` (pt-PT locale).
+- Components exported via barrel in `src/ui/components/index.ts`.
 
-- ✅ Engine: `findEscalao`, métodos 2 e 3 do art. 68.º, pipeline completo `calcularLiquidacao` (cat. A/H, individual/conjunta).
-- ✅ Testes vitest cobrindo casos canónicos (coletável 15 650 € → 2 413,84 €, etc.).
-- ✅ 7 componentes pedagógicos (SectionHeader, Lede, SourceBox, FormulaBlock, Callout, StepTable, MarginalNote).
-- ✅ Demo end-to-end em `src/main.ts`.
-- ✅ Tax data 2025 (Lei 55-A/2025) verificada.
-- ⚠️ Tax data 2026 (Lei 73-A/2025) é stub — verificar todos os valores contra Portal das Finanças antes de uso real.
-- ❌ Componentes interativos: `BracketBar`, `Calculator`, `SlicedIncome`.
-- ❌ Componentes de meta-navegação: `TabsNav`, `TableOfContents`, `ResumoCard`, `ResourceCard`.
-- ❌ Engine: Categoria F (rendas), Anexo D (transparência fiscal), dependentes.
-- ❌ Persistência dos 4 perfis (Mãe, Padrasto, Namorada, Zé) em localStorage.
+## Conventions
 
-## Histórico
+- TypeScript strict max: `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`. Do not relax.
+- Explicit types on public API of each module.
+- Path alias `@/*` → `src/*`.
+- Commits: small, one per unit of change. Messages in imperative, English.
+- Before implementing a feature, read touched files and run `npm test` + `npm run typecheck` to confirm green state.
 
-Scaffold criado em sessão Claude.ai (Artifacts) — ver `BRIEFING.md` para contexto completo das decisões.
+## Current State
+
+- Engine covers Category A/H income, individual and joint taxation (quotient 1 or 2).
+- Tax data 2025 (Lei 55-A/2025) verified. 2026 (Lei 73-A/2025) is a stub — verify against Portal das Finanças before real use.
+- 7 pedagogical components built. `main.ts` is a demo (section 04 of the guide), not the final app.
+- Not yet implemented: interactive components (BracketBar, Calculator, SlicedIncome), navigation (TabsNav, TOC), Category F, Anexo D, dependents, localStorage profiles.
+- See `BRIEFING.md` for full context on design decisions.

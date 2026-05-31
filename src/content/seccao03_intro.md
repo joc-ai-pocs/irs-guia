@@ -1,0 +1,1 @@
+O **n.º 2 do artigo 68.º** permite chegar à coleta total de três formas. Os três dão (matematicamente) o mesmo número — escolhe-se um pela praticidade. **O método 3 é o usado pela AT** e o mais simples de calcular à mão.

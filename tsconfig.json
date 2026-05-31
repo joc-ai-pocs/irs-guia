@@ -40,7 +40,7 @@
     },
 
     /* types available */
-    "types": ["vite/client", "vitest/globals"]
+    "types": ["vite/client", "vitest/globals", "wicg-file-system-access"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]

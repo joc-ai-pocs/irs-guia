@@ -1,0 +1,1 @@
+Insere os valores abaixo. O cálculo replica a estrutura da nota de liquidação da AT (linhas 01 → 25) e mostra cada passo. A barra dos escalões em cima destaca automaticamente o escalão onde o teu rendimento coletável caiu.

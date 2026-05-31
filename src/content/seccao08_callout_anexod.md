@@ -1,0 +1,1 @@
+A matéria coletável imputada entra como cat. B e é englobada com os outros rendimentos. Aplica-se a *ti (Zé)*. Vai alterar o escalão final, possivelmente para cima. Ver [art. 20.º CIRS](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs20.aspx).

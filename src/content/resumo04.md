@@ -1,0 +1,7 @@
+- Para cat. A e H em 2025: **8,54 × IAS = 8,54 × 522,50 € = 4 462,15 €** por titular — <a href="#deducoes-especificas" data-tab="guia">ver detalhe</a>
+- Base legal: **alínea a) do n.º 1 do [artigo 25.º do CIRS](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx)** (redação dada pela Lei 45-A/2024)
+- Valor do IAS 2025 publicado pela [Segurança Social](https://www.seg-social.pt/ias-indexante-dos-apoios-sociais) (Portaria 421-A/2024)
+- Se as **contribuições obrigatórias para SS/ADSE/CGA** forem maiores que 4 462,15 €, usa-se o valor maior (al. b))
+- Quotizações sindicais (al. d) e quotas a ordens profissionais (n.º 4) podem aumentar a dedução até 4 583,34 €
+- Pensionistas (cat. H): mesma fórmula via [art. 53.º CIRS](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs53.aspx)
+- Categorias B (recibos verdes / Anexo D) e F (rendas) têm regras próprias — [art. 31.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs31.aspx) e [art. 41.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs41.aspx)

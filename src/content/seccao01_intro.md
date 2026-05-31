@@ -1,0 +1,1 @@
+O IRS não é "uma percentagem do salário". É o resultado de uma sequência de operações que parte do rendimento bruto, retira deduções específicas para chegar ao rendimento <em class="term">coletável</em>, encaixa esse valor nos <em class="term">escalões</em>, calcula a coleta, e finalmente abate retenções e deduções à coleta.

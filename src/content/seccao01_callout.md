@@ -1,0 +1,1 @@
+**Rendimento bruto ≠ Rendimento coletável.** Os escalões aplicam-se ao <em class="term">coletável</em>, não ao bruto. Um salário bruto anual de 14 000 € não corresponde a "16% de imposto" — corresponde a um coletável de ~9 540 € (após deduzir 4 462,15 €), que cai no 2.º escalão e gera uma coleta muito menor depois da parcela a abater.

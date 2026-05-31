@@ -1,0 +1,7 @@
+- **Despesas gerais familiares**: 35% do gasto, máx. 250 € por titular (até 500 € em conjunto)
+- **Saúde**: 15% das despesas, máx. 1 000 €
+- **Educação**: 30% das despesas, máx. 800 € (até 1 100 € com despesas de estudante deslocado)
+- **Rendas** (inquilino): 15% das rendas pagas, máx. 700 €
+- **PPR**: 20% das contribuições, máx. 400 € (&lt;35a), 350 € (35-50a), 300 € (&gt;50a)
+- A maior parte vem **pré-apurada pela AT** via e-fatura — janela de reclamação fecha em 31/03 de cada ano
+- Detalhe de todas as deduções: [folhetos informativos da AT](https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Pages/default.aspx)

@@ -1,0 +1,1 @@
+Esta é a "dedução automática" que abate ao rendimento bruto *antes* de chegar ao coletável. Para trabalhadores por conta de outrem (cat. A) e pensionistas (cat. H), o valor para os rendimentos de 2025 é fixo e equivalente a **8,54 × IAS**, conforme a alínea a) do n.º 1 do artigo 25.º do CIRS.

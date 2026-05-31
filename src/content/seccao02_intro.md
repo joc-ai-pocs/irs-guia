@@ -1,0 +1,1 @@
+Esta é a tabela oficial do art. 68.º do CIRS, na **redação dada pela Lei n.º 55-A/2025, de 22/07**, aplicável aos rendimentos auferidos em 2025 (a declarar de abril a junho de 2026). Passa o rato sobre cada escalão para o destacar.

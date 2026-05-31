@@ -39,26 +39,14 @@ a { color: inherit; }
 
 /* ─────────── page shell ─────────── */
 .page {
-  max-width: 760px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: var(--sp-9) var(--sp-6);
+  padding: 60px var(--sp-6) 120px;
   position: relative;
-}
-
-.page::before {
-  content: '';
-  position: absolute;
-  top: var(--sp-9);
-  bottom: var(--sp-9);
-  left: 8px;
-  width: 1px;
-  background: var(--rule);
-  opacity: 0.6;
 }
 
 @media (max-width: 720px) {
   .page { padding: var(--sp-7) var(--sp-5); }
-  .page::before { display: none; }
 }
 
 /* ─────────── typography utilities ─────────── */
