@@ -1,0 +1,21 @@
+.marginal-note {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: var(--sp-3);
+  margin: var(--sp-6) 0;
+  padding-left: var(--sp-2);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 620px;
+}
+
+.marginal-note::before {
+  content: '✦';
+  color: var(--brick);
+  font-size: 13px;
+  font-style: normal;
+  padding-top: 5px;
+}

@@ -1,0 +1,14 @@
+.lede {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 21px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin-bottom: var(--sp-6);
+}
+
+.lede em {
+  font-style: italic;
+  color: var(--brick-deep);
+}
