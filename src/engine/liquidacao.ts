@@ -1,6 +1,10 @@
 import type { TaxYearConfig } from '@/tax-data/types';
 import { calcularColetaMetodo3, type ColetaResult } from './coleta';
-import { calcularDeducaoEspecifica } from './escaloes';
+import {
+  calcularDeducaoEspecifica,
+  calcularDeducaoEspecificaCategoria,
+  type DeducaoEspecificaCategoria,
+} from './escaloes';
 
 /**
  * Inputs for a settlement-note-style calculation.
@@ -9,10 +13,29 @@ import { calcularDeducaoEspecifica } from './escaloes';
  * Optional fields default to zero / sensible neutral values.
  */
 export interface LiquidacaoInput {
-  /** Gross income (sum of all category A/H rendimentos do agregado). */
+  /**
+   * Gross income (sum of all category A/H rendimentos do agregado).
+   *
+   * When the per-category fields ({@link rendimentoTrabalho} /
+   * {@link rendimentoPensoes}) are provided, this is derived as their sum and
+   * any value passed here is ignored. It remains the canonical persisted field
+   * so legacy (single-income) exercises keep loading without a schema bump.
+   */
   readonly rendimentoBruto: number;
   /**
-   * Optional override for the specific deduction. If omitted,
+   * Gross income of category A (trabalho dependente), in euros. Optional.
+   * When present (alongside or instead of {@link rendimentoPensoes}), the
+   * engine computes the specific deduction PER category and caps each at its
+   * own income — matching the AT settlement note.
+   */
+  readonly rendimentoTrabalho?: number;
+  /** Mandatory social-security contributions for category A, in euros. */
+  readonly contribuicoesTrabalho?: number;
+  /** Gross income of category H (pensões), in euros. Optional. */
+  readonly rendimentoPensoes?: number;
+  /**
+   * Optional override for the specific deduction. Used only in the legacy
+   * single-income path (when no per-category field is provided). If omitted,
    * {@link calcularDeducaoEspecifica} is used with the year's IAS-based minimum.
    */
   readonly deducaoEspecifica?: number;
@@ -40,6 +63,12 @@ export interface LiquidacaoResult {
   // line 01–06
   readonly rendimentoBruto: number;
   readonly deducaoEspecifica: number;
+  /**
+   * Per-category breakdown of {@link deducaoEspecifica}. Present only when the
+   * input used the per-category fields; omitted in the legacy single-income
+   * path. Lets the UI explain how the deduction was reached.
+   */
+  readonly deducaoEspecificaDetalhe?: readonly DeducaoEspecificaCategoria[];
   readonly rendimentoColetavel: number;
 
   // line 10–18
@@ -79,13 +108,50 @@ export function calcularLiquidacao(
   config: TaxYearConfig,
 ): LiquidacaoResult {
   const {
-    rendimentoBruto,
-    deducaoEspecifica = calcularDeducaoEspecifica(config),
+    rendimentoTrabalho,
+    contribuicoesTrabalho = 0,
+    rendimentoPensoes,
     deducoesColeta = 0,
     beneficioMunicipalPct = 0,
     retencaoFonte = 0,
     quocienteFamiliar = 1,
   } = input;
+
+  // Per-category path: when any category-specific income is provided, the
+  // specific deduction is computed for each category and capped at that
+  // category's own income (matching the AT settlement note). Otherwise we keep
+  // the legacy single-income behaviour.
+  const usaCategorias =
+    rendimentoTrabalho !== undefined || rendimentoPensoes !== undefined;
+
+  let rendimentoBruto: number;
+  let deducaoEspecifica: number;
+  let deducaoEspecificaDetalhe: readonly DeducaoEspecificaCategoria[] | undefined;
+
+  if (usaCategorias) {
+    const detalhe: DeducaoEspecificaCategoria[] = [];
+    if (rendimentoTrabalho !== undefined) {
+      detalhe.push(
+        calcularDeducaoEspecificaCategoria(
+          rendimentoTrabalho,
+          config,
+          contribuicoesTrabalho,
+          'A',
+        ),
+      );
+    }
+    if (rendimentoPensoes !== undefined) {
+      detalhe.push(
+        calcularDeducaoEspecificaCategoria(rendimentoPensoes, config, 0, 'H'),
+      );
+    }
+    rendimentoBruto = detalhe.reduce((sum, d) => sum + d.rendimento, 0);
+    deducaoEspecifica = detalhe.reduce((sum, d) => sum + d.valor, 0);
+    deducaoEspecificaDetalhe = detalhe;
+  } else {
+    rendimentoBruto = input.rendimentoBruto;
+    deducaoEspecifica = input.deducaoEspecifica ?? calcularDeducaoEspecifica(config);
+  }
 
   // line 06 — rendimento coletável
   const rendimentoColetavel = Math.max(0, rendimentoBruto - deducaoEspecifica);
@@ -98,8 +164,13 @@ export function calcularLiquidacao(
   const coletaTotal = coleta.coleta * quocienteFamiliar;
 
   // lines 19–22 — coleta líquida
-  const beneficioMunicipal = coletaTotal * beneficioMunicipalPct;
-  const coletaLiquida = coletaTotal - deducoesColeta - beneficioMunicipal;
+  // The municipal benefit (participação variável dos municípios) applies to the
+  // collection AFTER the deductions to the collection are subtracted — not to
+  // the gross coleta total. So deduções à coleta come off first, then the
+  // municipal rate applies to whatever remains.
+  const coletaAposDeducoes = coletaTotal - deducoesColeta;
+  const beneficioMunicipal = Math.max(0, coletaAposDeducoes) * beneficioMunicipalPct;
+  const coletaLiquida = coletaAposDeducoes - beneficioMunicipal;
 
   // line 25 — imposto apurado (negativo = reembolso)
   const impostoApurado = coletaLiquida - retencaoFonte;
@@ -110,6 +181,7 @@ export function calcularLiquidacao(
   return {
     rendimentoBruto,
     deducaoEspecifica,
+    ...(deducaoEspecificaDetalhe ? { deducaoEspecificaDetalhe } : {}),
     rendimentoColetavel,
     baseParaTaxa,
     coleta,
