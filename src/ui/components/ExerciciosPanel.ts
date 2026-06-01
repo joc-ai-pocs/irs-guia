@@ -42,29 +42,53 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
   let state: StorageState = { kind: 'disconnected' };
   /** The name currently selected/active in the list (if any). */
   let activeName: string | null = null;
+  /** Whether the panel body is expanded. Defaults to collapsed. */
+  let expanded = false;
+  /** Last known items list — used so collapse/expand doesn't trigger a refetch. */
+  let lastItems: readonly Exercicio[] = [];
 
-  function render(items: readonly Exercicio[] = []): void {
-    root.replaceChildren(buildHeader(), buildBody(items));
+  function render(items?: readonly Exercicio[]): void {
+    if (items !== undefined) lastItems = items;
+    const children: (HTMLElement | null)[] = [buildToggle(lastItems)];
+    if (expanded) children.push(buildBody(lastItems));
+    root.replaceChildren(...children.filter((c): c is HTMLElement => c !== null));
   }
 
-  function buildHeader(): HTMLElement {
-    return h(
-      'header',
-      { class: 'exercicios-panel__header' },
-      h('div', { class: 'exercicios-panel__eyebrow' }, 'Exercícios guardados'),
+  function buildToggle(items: readonly Exercicio[]): HTMLElement {
+    const count = state.kind === 'connected' ? items.length : null;
+    const arrow = expanded ? '▾' : '▸';
+
+    const btn = h(
+      'button',
+      {
+        class: `exercicios-panel__toggle${expanded ? ' exercicios-panel__toggle--open' : ''}`,
+        type: 'button',
+      },
+      h('span', { class: 'exercicios-panel__toggle-arrow' }, arrow),
       h(
-        'div',
-        { class: 'exercicios-panel__status' },
-        statusLabel(state),
+        'span',
+        { class: 'exercicios-panel__toggle-label' },
+        h('span', { class: 'exercicios-panel__eyebrow' }, 'Exercícios guardados'),
+        count !== null
+          ? h('span', { class: 'exercicios-panel__toggle-count' }, `(${count})`)
+          : null,
       ),
+      h('span', { class: 'exercicios-panel__status' }, statusLabel(state)),
     );
+    btn.addEventListener('click', () => {
+      expanded = !expanded;
+      render();
+    });
+    return btn;
   }
 
   function buildBody(items: readonly Exercicio[]): HTMLElement {
-    if (state.kind === 'unsupported') return unsupportedBody(state.reason);
-    if (state.kind === 'disconnected') return disconnectedBody();
-    if (state.kind === 'needs-permission') return needsPermissionBody(state.directoryName, state.grant);
-    return connectedBody(state, items);
+    let inner: HTMLElement;
+    if (state.kind === 'unsupported') inner = unsupportedBody(state.reason);
+    else if (state.kind === 'disconnected') inner = disconnectedBody();
+    else if (state.kind === 'needs-permission') inner = needsPermissionBody(state.directoryName, state.grant);
+    else inner = connectedBody(state, items);
+    return h('div', { class: 'exercicios-panel__body' }, inner);
   }
 
   function unsupportedBody(reason: string): HTMLElement {

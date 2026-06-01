@@ -67,6 +67,10 @@
 
 .calculator__field input:focus { border-bottom-color: var(--brick); }
 
+/* When a scope group is toggled off, hide its fields entirely (the input
+ * elements stay in the DOM so the value is preserved for re-toggling). */
+.calculator__field[hidden] { display: none; }
+
 .calculator__hint {
   font-size: 12px;
   color: var(--ink-faint);
@@ -101,6 +105,42 @@
 
 .calculator__row-label { color: var(--ink-soft); }
 .calculator__row-value { font-weight: 600; color: var(--ink); }
+
+.calculator__deducao-detalhe {
+  margin: var(--sp-2) 0 var(--sp-3);
+  font-family: var(--font-sans, inherit);
+}
+
+.calculator__deducao-detalhe > summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--brick);
+  list-style-position: inside;
+}
+
+.calculator__deducao-detalhe > summary:hover { color: var(--ink); }
+
+.calculator__deducao-cat { margin: var(--sp-3) 0; }
+
+.calculator__deducao-nota {
+  margin: var(--sp-1) 0 0;
+  font-family: var(--font-sans, inherit);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.calculator__deducao-total {
+  margin: var(--sp-3) 0 0;
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--rule);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
 
 .calculator__final {
   font-family: var(--font-display);

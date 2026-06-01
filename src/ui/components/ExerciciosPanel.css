@@ -2,19 +2,56 @@
   background: var(--paper-2);
   border: 1px solid var(--rule);
   border-radius: var(--r-2);
-  padding: var(--sp-5);
-  margin: var(--sp-6) 0;
+  margin: var(--sp-5) 0;
+  overflow: hidden;
 }
 
-.exercicios-panel__header {
+.exercicios-panel__toggle {
+  width: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding-bottom: var(--sp-3);
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background var(--t-fast);
+}
+
+.exercicios-panel__toggle:hover { background: var(--paper-3); }
+
+.exercicios-panel__toggle--open {
   border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--sp-4);
-  gap: var(--sp-4);
-  flex-wrap: wrap;
+  background: var(--paper-3);
+}
+
+.exercicios-panel__toggle-arrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--brick);
+  width: 12px;
+  display: inline-block;
+}
+
+.exercicios-panel__toggle-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex: 1;
+}
+
+.exercicios-panel__toggle-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--brick);
+  font-weight: 600;
+}
+
+.exercicios-panel__body {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
 }
 
 .exercicios-panel__eyebrow {
@@ -31,6 +68,10 @@
   font-size: 11px;
   color: var(--ink-faint);
   letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50%;
 }
 
 .exercicios-panel__empty {

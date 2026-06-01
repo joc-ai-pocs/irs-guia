@@ -1,0 +1,73 @@
+.tab-calculadora__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+  margin-top: var(--sp-4);
+}
+
+/* Calculator card has its own padding & background; reset the margins so the
+ * grid cell controls vertical rhythm. */
+.tab-calculadora__col-inputs .calculator { margin: 0; }
+.tab-calculadora__col-result .bracket-bar { margin: 0; }
+
+/* BracketBar internals tighten up so the 9-column table fits in half-width. */
+.tab-calculadora__col-result .bracket-bar { padding: var(--sp-4); }
+.tab-calculadora__col-result .bracket-bar__table { font-size: 12px; }
+.tab-calculadora__col-result .bracket-bar__table th,
+.tab-calculadora__col-result .bracket-bar__table td { padding: var(--sp-2); }
+.tab-calculadora__col-result .bracket-bar__range { font-size: 11px; }
+.tab-calculadora__col-result .bracket-bar__bar { margin: var(--sp-6) 0 var(--sp-4); }
+
+/* Calculator inputs stay a single column so the labels and hints don't get
+ * cramped on the narrower half. */
+.tab-calculadora__col-inputs .calculator__grid { grid-template-columns: 1fr; gap: var(--sp-4); }
+.tab-calculadora__col-inputs .calculator__field input { font-size: 18px; }
+
+/* Result column: BracketBar above, then a card-styled "Resultado do cálculo"
+ * block containing the line-by-line breakdown and the final result box. */
+.tab-calculadora__resultado {
+  margin-top: var(--sp-5);
+  background: linear-gradient(135deg, var(--paper-2) 0%, var(--paper) 100%);
+  border: 1px solid var(--rule);
+  padding: var(--sp-5) var(--sp-6);
+  border-radius: var(--r-3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.tab-calculadora__resultado-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--brick);
+  font-weight: 600;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* The output block inherits the surrounding card's frame — drop its own brick
+ * accent so we don't end up with nested borders. */
+.tab-calculadora__resultado .calculator__output {
+  margin: 0;
+  background: transparent;
+  border-left: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.tab-calculadora__resultado .calculator__final {
+  margin-top: var(--sp-5);
+}
+
+@media (max-width: 900px) {
+  .tab-calculadora__grid {
+    grid-template-columns: 1fr;
+  }
+  .tab-calculadora__col-inputs .calculator__grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  .tab-calculadora__col-inputs .calculator__grid { grid-template-columns: 1fr; }
+}
