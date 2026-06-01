@@ -1,4 +1,10 @@
-export { findEscalao, calcularDeducaoEspecifica } from './escaloes';
+export {
+  findEscalao,
+  calcularDeducaoEspecifica,
+  calcularDeducaoEspecificaCategoria,
+  type CategoriaRendimento,
+  type DeducaoEspecificaCategoria,
+} from './escaloes';
 export {
   calcularColetaMetodo3,
   calcularColetaMetodo2,

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { config2025 } from '@/tax-data/2025';
-import { findEscalao, calcularDeducaoEspecifica } from './escaloes';
+import {
+  findEscalao,
+  calcularDeducaoEspecifica,
+  calcularDeducaoEspecificaCategoria,
+} from './escaloes';
 
 describe('findEscalao', () => {
   const escaloes = config2025.escaloes;
@@ -45,5 +49,39 @@ describe('calcularDeducaoEspecifica', () => {
 
   it('handles the equality case by returning either (max collapses)', () => {
     expect(calcularDeducaoEspecifica(config2025, 4462.15)).toBe(4462.15);
+  });
+});
+
+describe('calcularDeducaoEspecificaCategoria', () => {
+  it('applies the IAS-based minimum for cat. A when income is high and contributions are lower', () => {
+    // Real case: salary 13 054,76 €, contributions 1 436,05 € < 4 462,15 €.
+    const d = calcularDeducaoEspecificaCategoria(13054.76, config2025, 1436.05, 'A');
+    expect(d.valorBruto).toBe(4462.15);
+    expect(d.valor).toBe(4462.15);
+    expect(d.limitadoPorRendimento).toBe(false);
+    expect(d.categoria).toBe('A');
+  });
+
+  it('uses the contributions when they exceed the IAS-based minimum (cat. A)', () => {
+    const d = calcularDeducaoEspecificaCategoria(60000, config2025, 6600, 'A');
+    expect(d.valorBruto).toBe(6600);
+    expect(d.valor).toBe(6600);
+    expect(d.limitadoPorRendimento).toBe(false);
+  });
+
+  it('caps the deduction at the category income (cat. H pension below the minimum)', () => {
+    // Real case: pension 3 571,62 € < 4 462,15 € → deduction limited to the pension.
+    const d = calcularDeducaoEspecificaCategoria(3571.62, config2025, 0, 'H');
+    expect(d.valorBruto).toBe(4462.15);
+    expect(d.valor).toBeCloseTo(3571.62, 2);
+    expect(d.limitadoPorRendimento).toBe(true);
+    expect(d.categoria).toBe('H');
+  });
+
+  it('defaults contributions to 0 and category to A', () => {
+    const d = calcularDeducaoEspecificaCategoria(20000, config2025);
+    expect(d.categoria).toBe('A');
+    expect(d.contribuicoes).toBe(0);
+    expect(d.valor).toBe(4462.15);
   });
 });
