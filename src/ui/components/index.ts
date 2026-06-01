@@ -12,6 +12,12 @@ export { MarginalNote, type MarginalNoteProps } from './MarginalNote';
 
 export { Markdown, type MarkdownProps } from './Markdown';
 export { CtaButton, type CtaButtonProps } from './CtaButton';
+export {
+  AnexosHeader,
+  type AnexosHeaderProps,
+  type AnexoSpec,
+  type AnexoEstado,
+} from './AnexosHeader';
 export { Hero, type HeroProps, type HeroMetaItem } from './Hero';
 export { Section, type SectionProps } from './Section';
 export { Footer, type FooterProps } from './Footer';
@@ -30,8 +36,10 @@ export { MethodsGrid, type MethodsGridProps } from './MethodsGrid';
 export { SlicedIncome, type SlicedIncomeProps } from './SlicedIncome';
 export {
   Calculator,
+  DEFAULT_VISIBLE_GROUPS,
   type CalculatorProps,
   type CalculatorHandle,
+  type VisibleGroups,
 } from './Calculator';
 export {
   ExerciciosPanel,

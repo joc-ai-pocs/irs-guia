@@ -1,0 +1,135 @@
+.anexos-header {
+  margin: var(--sp-5) 0 var(--sp-6);
+  padding-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--rule);
+}
+
+.anexos-header__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--brick);
+  font-weight: 600;
+  margin-bottom: var(--sp-3);
+}
+
+.anexos-header__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--ink);
+  margin-bottom: var(--sp-4);
+  line-height: 1.25;
+}
+
+.anexos-header__chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-3);
+}
+
+.anexos-header__chip {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  transition: border-color var(--t-fast), background var(--t-fast), opacity var(--t-fast);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+/* Toggleable cards (rendered as <button>) — give them a clear affordance. */
+.anexos-header__chip--toggleable {
+  cursor: pointer;
+}
+
+.anexos-header__chip--toggleable:hover {
+  border-color: var(--brick);
+  background: var(--paper-3);
+}
+
+.anexos-header__chip--toggleable:focus-visible {
+  outline: 2px solid var(--brick);
+  outline-offset: 2px;
+}
+
+.anexos-header__chip--inativo {
+  opacity: 0.5;
+  background: transparent;
+}
+
+.anexos-header__chip--inativo .anexos-header__chip-mark {
+  color: var(--ink-faint);
+}
+
+.anexos-header__chip--obrigatorio {
+  border-left: 3px solid var(--brick);
+}
+
+.anexos-header__chip--conforme {
+  border-left: 3px solid var(--gold);
+}
+
+.anexos-header__chip--nao-aplicavel {
+  opacity: 0.55;
+  border-left: 3px solid var(--rule-strong);
+}
+
+.anexos-header__chip:hover {
+  background: var(--paper-3);
+}
+
+.anexos-header__chip-id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.anexos-header__chip-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.anexos-header__chip-desc {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.anexos-header__chip-badge {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.anexos-header__chip--obrigatorio .anexos-header__chip-badge { color: var(--brick); }
+.anexos-header__chip--conforme .anexos-header__chip-badge { color: var(--gold); }
+
+.anexos-header__chip-mark {
+  margin-top: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brick);
+  font-weight: 600;
+}
