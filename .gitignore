@@ -179,3 +179,9 @@ coverage/
 
 # vite
 *.tsbuildinfo
+
+# Claude Code local state (keep launch.json shareable, ignore machine-local settings)
+.claude/settings.local.json
+
+# Personal saved IRS exercises — contain real taxpayer data, not for the repo
+exercises/
