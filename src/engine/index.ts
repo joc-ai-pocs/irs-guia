@@ -17,3 +17,15 @@ export {
   type LiquidacaoInput,
   type LiquidacaoResult,
 } from './liquidacao';
+export {
+  calcularDeducaoCategoriaF,
+  calcularColetaAutonomaF,
+  obterTaxaCatF,
+  type DespesasCatF,
+  type DeducaoCategoriaF,
+  type DuracaoContratoF,
+} from './categoriaF';
+export {
+  calcularMinimoExistencia,
+  type DetalheMinimoExistencia,
+} from './minimoExistencia';
