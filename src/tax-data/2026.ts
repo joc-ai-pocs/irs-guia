@@ -14,6 +14,7 @@ import type { TaxYearConfig } from './types';
 export const config2026: TaxYearConfig = {
   ano: 2026,
   anoDeclaracao: 2027,
+  provisorio: true,
   diplomaLegal: 'Lei n.º 73-A/2025, de 30/12 (OE 2026) — VALORES POR CONFIRMAR',
   ias: 525.0, // TODO: confirmar valor do IAS para 2026
   deducaoEspecificaCoef: 8.54,
@@ -54,15 +55,32 @@ export const config2026: TaxYearConfig = {
   ],
 
   fontes: {
+    cirsIndice: {
+      id: 'cirsIndice',
+      label: 'Código do IRS (CIRS) — índice geral',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/codigo-do-irs-indice.aspx',
+    },
     art68: {
       id: 'art68',
       label: 'Art. 68.º CIRS — redação para rendimentos de 2026',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx',
     },
-    lei73A: {
-      id: 'lei73A',
+    // The statute establishing this year's bracket table (generic id `diploma`
+    // so the UI can reference it for any year).
+    diploma: {
+      id: 'diploma',
       label: 'Lei n.º 73-A/2025, de 30/12 (PDF oficial)',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Lei_73_A_2025.pdf',
+    },
+    art25: {
+      id: 'art25',
+      label: 'Art. 25.º CIRS — Rendimentos do trabalho dependente: deduções',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx',
+    },
+    art53: {
+      id: 'art53',
+      label: 'Art. 53.º CIRS — Pensões (dedução específica cat. H)',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs53.aspx',
     },
     cirs78b: {
       id: 'cirs78b',
@@ -83,6 +101,31 @@ export const config2026: TaxYearConfig = {
       id: 'cirs78e',
       label: 'Art. 78.º-E CIRS — Encargos com imóveis (rendas)',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78e.aspx',
+    },
+    modelo3: {
+      id: 'modelo3',
+      label: 'Modelo 3 do IRS — Portal das Finanças',
+      url: 'https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Modelo_3/Paginas/default.aspx',
+    },
+    decoNota: {
+      id: 'decoNota',
+      label: 'Descodificar a nota de liquidação — DECO PROTeste',
+      url: 'https://www.deco.proteste.pt/dinheiro/impostos/noticias/descodifique-nota-liquidacao-irs',
+    },
+    montepio: {
+      id: 'montepio',
+      label: 'Escalões de IRS — Montepio',
+      url: 'https://www.montepio.org/ei/mais-recentes/escaloes-de-irs-sabe-qual-e-o-seu/',
+    },
+    santander: {
+      id: 'santander',
+      label: 'Como funcionam os escalões — Santander Salto',
+      url: 'https://www.santander.pt/salto/escaloes-irs',
+    },
+    ias: {
+      id: 'ias',
+      label: 'IAS 2026 = 525,00 € (por confirmar) — Segurança Social',
+      url: 'https://www.seg-social.pt/ias-indexante-dos-apoios-sociais',
     },
   },
 };

@@ -77,6 +77,12 @@ export interface TaxYearConfig {
   readonly ano: number;
   /** The civil year in which the declaration is filed. */
   readonly anoDeclaracao: number;
+  /**
+   * True while this year's values are provisional — i.e. not yet verified
+   * against the official Portal das Finanças sources. The UI uses this to
+   * warn users before they rely on the numbers. Omit once verified.
+   */
+  readonly provisorio?: boolean;
   /** Human-readable label for the controlling statute. */
   readonly diplomaLegal: string;
   /** Value of IAS (Indexante dos Apoios Sociais) in euros. */

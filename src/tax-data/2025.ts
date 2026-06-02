@@ -63,8 +63,9 @@ export const config2025: TaxYearConfig = {
       label: 'Art. 68.º CIRS — redação para rendimentos de 2025',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs68ra_202512.aspx',
     },
-    art68_2026: {
-      id: 'art68_2026',
+    // Next year's redaction of art. 68.º — shown alongside the current table.
+    art68Seguinte: {
+      id: 'art68Seguinte',
       label: 'Art. 68.º CIRS — redação para rendimentos de 2026 (Lei 73-A/2025)',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx',
     },
@@ -123,8 +124,10 @@ export const config2025: TaxYearConfig = {
       label: 'Art. 21.º EBF — PPR',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/Estatuto_Beneficios_Fiscais/Pages/EBF21.aspx',
     },
-    lei55A: {
-      id: 'lei55A',
+    // The statute establishing this year's bracket table (generic id `diploma`
+    // so the UI can reference it for any year).
+    diploma: {
+      id: 'diploma',
       label: 'Lei n.º 55-A/2025, de 22/07 (PDF oficial)',
       url: 'https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/diplomas_legislativos/Documents/Lei_55_A_2025.pdf',
     },
