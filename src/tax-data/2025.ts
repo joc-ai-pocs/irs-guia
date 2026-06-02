@@ -16,6 +16,20 @@ export const config2025: TaxYearConfig = {
   // 522.50 × 8.54 = 4462.15 (preserved as published)
   deducaoEspecificaMinima: 4462.15,
 
+  // Art. 70.º n.º 1 CIRS (Lei 73-A/2024): max(12 880, 1.5 × 14 × IAS).
+  // 1.5 × 14 × 522.50 = 10 972.50 < 12 880 → V = 12 880.
+  valorReferenciaMinimoExistencia: 12880,
+  // Art. 78.º-B CIRS — limite por sujeito passivo.
+  limiteDespesasGerais: 250,
+
+  // Art. 72.º CIRS — taxas autónomas para rendas prediais (cat. F).
+  taxasCatF: {
+    padrao: 0.25,
+    duracao5a10: 0.15,
+    duracao10a20: 0.10,
+    duracao20mais: 0.05,
+  },
+
   escaloes: [
     { numero: 1, limiteSuperior: 8059,                       taxaNormal: 0.125, taxaMedia: 0.125,    parcelaAbater: 0       },
     { numero: 2, limiteSuperior: 12160,                      taxaNormal: 0.160, taxaMedia: 0.13680,  parcelaAbater: 282.07  },

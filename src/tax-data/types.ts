@@ -89,6 +89,34 @@ export interface TaxYearConfig {
    * so callers don't have to recompute (and so historical rounding is preserved).
    */
   readonly deducaoEspecificaMinima: number;
+  /**
+   * Valor de referência do mínimo de existência (art. 70.º n.º 1 CIRS).
+   * Per Lei n.º 73-A/2024, equals `max(12 880, 1.5 × 14 × IAS)`. Stored as a
+   * materialized euro figure so historical rounding is preserved.
+   */
+  readonly valorReferenciaMinimoExistencia: number;
+  /**
+   * Limite anual da dedução à coleta para "Despesas gerais familiares"
+   * (art. 78.º-B CIRS), in euros — used by art. 70.º n.º 2 b) and c) as part
+   * of the abatimento formula. Currently €250 per sujeito passivo.
+   */
+  readonly limiteDespesasGerais: number;
+  /**
+   * Autonomous taxation rates for category F (rendimentos prediais), per
+   * art. 72.º n.º 1 al. e) and n.º 2 a 5 CIRS. The 25% standard rate is the
+   * AT default; reduced rates apply when the lease contract has a minimum
+   * duration as listed below.
+   */
+  readonly taxasCatF: {
+    /** Default rate (short-term or open-ended leases) — currently 25%. */
+    readonly padrao: number;
+    /** Lease duration {@code >5 ≤ 10} years. */
+    readonly duracao5a10: number;
+    /** Lease duration {@code >10 ≤ 20} years. */
+    readonly duracao10a20: number;
+    /** Lease duration {@code >20} years. */
+    readonly duracao20mais: number;
+  };
   /** Progressive brackets of art. 68.º CIRS. Must be ordered by {@link Escalao.numero}. */
   readonly escaloes: readonly Escalao[];
   /** Known limits for deductions to the collection. */

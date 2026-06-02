@@ -5,6 +5,15 @@ import {
   calcularDeducaoEspecificaCategoria,
   type DeducaoEspecificaCategoria,
 } from './escaloes';
+import {
+  calcularColetaAutonomaF,
+  calcularDeducaoCategoriaF,
+  obterTaxaCatF,
+  type DespesasCatF,
+  type DeducaoCategoriaF,
+  type DuracaoContratoF,
+} from './categoriaF';
+import { calcularMinimoExistencia } from './minimoExistencia';
 
 /**
  * Inputs for a settlement-note-style calculation.
@@ -34,6 +43,50 @@ export interface LiquidacaoInput {
   /** Gross income of category H (pensões), in euros. Optional. */
   readonly rendimentoPensoes?: number;
   /**
+   * Gross rents (cat. F), in euros. Optional. When present, the engine
+   * computes a cat. F autonomous collection (art. 72.º CIRS) by default. The
+   * deductible expenses are subtracted before the rate is applied (art. 41.º).
+   */
+  readonly rendasBrutas?: number;
+  /** Itemized deductible expenses for cat. F (IMI, condomínio, conservação). */
+  readonly despesasCatF?: DespesasCatF;
+  /**
+   * Lease-duration bucket selecting the autonomous rate (25/15/10/5%).
+   * Defaults to {@link DuracaoContratoF#padrao} (25%).
+   */
+  readonly duracaoCatF?: DuracaoContratoF;
+  /**
+   * Tax withheld at source on the rents (typically 25%, only applicable when
+   * the tenant is a corporate entity). Subtracted from the total imposto at
+   * line 24. Optional, defaults to 0.
+   */
+  readonly retencaoCatF?: number;
+  /**
+   * Whether the contribuinte opted to include cat. F income in the progressive
+   * brackets (art. 22.º — opção pelo englobamento). When `true`, cat. F net
+   * income is added to the progressive base instead of being taxed at the
+   * autonomous rate. Defaults to `false` (the AT default).
+   */
+  readonly englobarCatF?: boolean;
+  /**
+   * Imputação especial cat. B (Anexo D — art. 20.º CIRS) — matéria coletável
+   * imputada ao sócio por sociedade sujeita ao regime de transparência fiscal
+   * (art. 6.º CIRC). Já vem como rendimento líquido: soma diretamente ao
+   * rendimento coletável progressivo (sem dedução específica).
+   */
+  readonly imputacaoCatB?: number;
+  /**
+   * IRC retido na fonte sobre os rendimentos da sociedade transparente,
+   * imputado ao sócio (Anexo D, quadro 4). Abate-se à retenção total (linha 24).
+   */
+  readonly retencaoCatB?: number;
+  /**
+   * Pagamentos por conta efetuados pela sociedade transparente, imputados ao
+   * sócio (Anexo D, quadro 4). Aparecem na linha 23 da nota — abatem-se antes
+   * da retenção na fonte.
+   */
+  readonly pagamentosContaCatB?: number;
+  /**
    * Optional override for the specific deduction. Used only in the legacy
    * single-income path (when no per-category field is provided). If omitted,
    * {@link calcularDeducaoEspecifica} is used with the year's IAS-based minimum.
@@ -60,9 +113,21 @@ export interface LiquidacaoInput {
  * received from the tax authority and reconcile each line.
  */
 export interface LiquidacaoResult {
-  // line 01–06
+  // line 01–05
+  /**
+   * Line 01 — total gross income across all included categories
+   * (cat. A + cat. H + cat. B imputado). Cat. F rents are NOT counted here
+   * because they are taxed autonomously (or, when englobed, enter at the
+   * coletável level via {@link rendimentoColetavel}).
+   */
   readonly rendimentoBruto: number;
   readonly deducaoEspecifica: number;
+  /**
+   * Line 04 — abatimento por mínimo de existência (art. 70.º n.º 1 al. b) CIRS).
+   * Automatically derived from the taxable base via {@link calcularMinimoExistencia};
+   * see that function for the caveat about the simplified formula.
+   */
+  readonly abatimentoMinimoExistencia: number;
   /**
    * Per-category breakdown of {@link deducaoEspecifica}. Present only when the
    * input used the per-category fields; omitted in the legacy single-income
@@ -81,7 +146,48 @@ export interface LiquidacaoResult {
   readonly beneficioMunicipal: number;
   readonly coletaLiquida: number;
 
+  /**
+   * Cat. F (rendimentos prediais) sub-result. Present only when the input
+   * carried any cat. F field; omitted otherwise. Includes the deduction
+   * breakdown, the chosen rate, the autonomous collection (zero when
+   * englobamento is on), and the cat. F-specific retention.
+   */
+  readonly catF?: {
+    readonly deducao: DeducaoCategoriaF;
+    readonly taxa: number;
+    readonly duracao: DuracaoContratoF;
+    /** Autonomous collection (€) — `rendimentoLiquido × taxa`. Zero when englobada. */
+    readonly coletaAutonoma: number;
+    readonly retencao: number;
+    readonly englobada: boolean;
+  };
+
+  /**
+   * Total tax due in the period — `coletaLiquida + (catF.coletaAutonoma ?? 0)`.
+   * Equivalent to {@link coletaLiquida} when there is no cat. F or the income
+   * was englobed (the cat. F portion is already inside coletaLiquida).
+   */
+  readonly impostoTotal: number;
+
+  /**
+   * Anexo D (imputação especial cat. B — art. 20.º CIRS) sub-result. Present
+   * only when the input carried any cat. B field; omitted otherwise. The
+   * imputed taxable matter is already inside {@link rendimentoColetavel};
+   * retentions feed into {@link retencaoFonte}, and pagamentos por conta are
+   * exposed below for the AT settlement-note line 23.
+   */
+  readonly catB?: {
+    readonly imputacao: number;
+    readonly retencao: number;
+    readonly pagamentosConta: number;
+  };
+
   // line 23–25
+  /**
+   * Total pagamentos por conta abated at line 23 (currently sourced only from
+   * cat. B imputed amounts; zero when no cat. B input is present).
+   */
+  readonly pagamentosConta: number;
   readonly retencaoFonte: number;
   /** Negative => reembolso; positive => imposto a pagar. */
   readonly impostoApurado: number;
@@ -95,9 +201,11 @@ export interface LiquidacaoResult {
  * settlement note. Reuses {@link calcularColetaMetodo3} for the bracket logic
  * and adds the surrounding accounting (withholdings, municipal benefit, etc.).
  *
- * Currently covers cat. A/H income in individual or joint regime.
- * Cat. F (rendas), Cat. B (Anexo D/transparência fiscal) and dependents
- * are NOT yet modeled and live in dedicated engine modules to be added.
+ * Currently covers cat. A/H/F income plus cat. B via Anexo D (imputação
+ * especial, art. 20.º CIRS), in individual or joint regime. Cat. F is taxed
+ * autonomously by default (art. 72.º), with optional englobamento (art. 22.º).
+ * Generic cat. B (Anexo B — recibos verdes, art. 31.º coeficientes) and
+ * dependents are NOT yet modelled.
  *
  * @param input the contribuinte's situation
  * @param config the fiscal year configuration
@@ -111,11 +219,35 @@ export function calcularLiquidacao(
     rendimentoTrabalho,
     contribuicoesTrabalho = 0,
     rendimentoPensoes,
+    rendasBrutas,
+    despesasCatF,
+    duracaoCatF = 'padrao',
+    retencaoCatF = 0,
+    englobarCatF = false,
+    imputacaoCatB,
+    retencaoCatB = 0,
+    pagamentosContaCatB = 0,
     deducoesColeta = 0,
     beneficioMunicipalPct = 0,
     retencaoFonte = 0,
     quocienteFamiliar = 1,
   } = input;
+
+  // Cat. F (rendimentos prediais) is opt-in: only computed when any cat. F
+  // field is provided. The deduction breakdown drives both the autonomous
+  // collection and (when englobada) the addition to the progressive base.
+  const temCatF = rendasBrutas !== undefined;
+  const catFDeducao = temCatF
+    ? calcularDeducaoCategoriaF(rendasBrutas, despesasCatF)
+    : null;
+  const taxaCatF = obterTaxaCatF(config, duracaoCatF);
+
+  // Cat. B (Anexo D — imputação especial / transparência fiscal). Per art. 20.º
+  // CIRS, the imputed amount enters as net income in category B and is added
+  // directly to the progressive base — there is no separate "specific deduction"
+  // (it is already matéria coletável, not gross income).
+  const temCatB = imputacaoCatB !== undefined;
+  const valorImputado = temCatB ? Math.max(0, imputacaoCatB) : 0;
 
   // Per-category path: when any category-specific income is provided, the
   // specific deduction is computed for each category and capped at that
@@ -150,11 +282,42 @@ export function calcularLiquidacao(
     deducaoEspecificaDetalhe = detalhe;
   } else {
     rendimentoBruto = input.rendimentoBruto;
-    deducaoEspecifica = input.deducaoEspecifica ?? calcularDeducaoEspecifica(config);
+    // The cat. A/H specific deduction can only absorb cat. A/H income — when
+    // the legacy single-income field is 0 (e.g. someone with ONLY cat. B
+    // imputado or ONLY cat. F rents), no cat. A/H deduction applies.
+    deducaoEspecifica =
+      rendimentoBruto > 0
+        ? (input.deducaoEspecifica ?? calcularDeducaoEspecifica(config))
+        : 0;
   }
 
-  // line 06 — rendimento coletável
-  const rendimentoColetavel = Math.max(0, rendimentoBruto - deducaoEspecifica);
+  // Cat. B (Anexo D) — imputação especial joins the GROSS income (line 01) per
+  // art. 20.º CIRS. The specific deduction (which only covers cat. A/H) is not
+  // applied to it; what it ultimately escapes is the {@link rendimentoColetavel}
+  // formula below, which subtracts only deducaoEspecifica (a cat. A/H quantity).
+  rendimentoBruto += valorImputado;
+
+  // line 05 — rendimento coletável.
+  // The abatimento por mínimo de existência (line 04, art. 70.º CIRS) is
+  // computed automatically from the gross income and the specific deduction —
+  // see calcularMinimoExistencia for the 3-branch (a/b/c) formula and the
+  // known caveats about transcription ambiguity.
+  const minExistencia = calcularMinimoExistencia(
+    rendimentoBruto,
+    deducaoEspecifica,
+    config,
+  );
+  const abatimentoMinimoExistencia = minExistencia.valor;
+
+  // line 05 — rendimento coletável.
+  // When the contribuinte opted for englobamento (art. 22.º), the cat. F net
+  // income is added to the progressive base (cat. F doesn't have a separate
+  // specific deduction because the rent expenses already reduced its income).
+  const englobaCatF = temCatF && englobarCatF;
+  const acrescimoEnglobamento = englobaCatF && catFDeducao ? catFDeducao.rendimentoLiquido : 0;
+  const rendimentoColetavel =
+    Math.max(0, rendimentoBruto - deducaoEspecifica - abatimentoMinimoExistencia) +
+    acrescimoEnglobamento;
 
   // line 10 — base para taxa (após quociente familiar)
   const baseParaTaxa = rendimentoColetavel / quocienteFamiliar;
@@ -172,16 +335,60 @@ export function calcularLiquidacao(
   const beneficioMunicipal = Math.max(0, coletaAposDeducoes) * beneficioMunicipalPct;
   const coletaLiquida = coletaAposDeducoes - beneficioMunicipal;
 
-  // line 25 — imposto apurado (negativo = reembolso)
-  const impostoApurado = coletaLiquida - retencaoFonte;
+  // Cat. F autonomous collection — only when englobamento is OFF. When ON the
+  // cat. F net income was already added to the progressive base and is now
+  // inside coletaLiquida; no separate autonomous tax applies.
+  const coletaAutonomaCatF =
+    catFDeducao && !englobaCatF
+      ? calcularColetaAutonomaF(catFDeducao.rendimentoLiquido, taxaCatF)
+      : 0;
 
-  // derived
-  const taxaMediaEfetiva = rendimentoBruto > 0 ? coletaLiquida / rendimentoBruto : 0;
+  const impostoTotal = coletaLiquida + coletaAutonomaCatF;
+
+  // line 23 — pagamentos por conta (only sourced from cat. B today).
+  const pagamentosConta = temCatB ? pagamentosContaCatB : 0;
+
+  // line 24 — total retentions (cat. A/H + cat. F + cat. B) abated from the imposto.
+  const retencaoTotal =
+    retencaoFonte + (temCatF ? retencaoCatF : 0) + (temCatB ? retencaoCatB : 0);
+
+  // line 25 — imposto apurado (negativo = reembolso). Pagamentos por conta
+  // come off first (line 23), then the retentions (line 24).
+  const impostoApurado = impostoTotal - pagamentosConta - retencaoTotal;
+
+  // derived: now uses impostoTotal so cat. F contribution is visible in the
+  // effective average rate. rendimentoBruto already includes cat. B imputado;
+  // we add cat. F gross rents on top because they sit outside the progressive
+  // base by default (autonomous taxation).
+  const baseRendimento =
+    rendimentoBruto + (temCatF && catFDeducao ? catFDeducao.rendasBrutas : 0);
+  const taxaMediaEfetiva = baseRendimento > 0 ? impostoTotal / baseRendimento : 0;
+
+  const catF =
+    temCatF && catFDeducao
+      ? {
+          deducao: catFDeducao,
+          taxa: englobaCatF ? 0 : taxaCatF,
+          duracao: duracaoCatF,
+          coletaAutonoma: coletaAutonomaCatF,
+          retencao: retencaoCatF,
+          englobada: englobaCatF,
+        }
+      : undefined;
+
+  const catB = temCatB
+    ? {
+        imputacao: valorImputado,
+        retencao: retencaoCatB,
+        pagamentosConta: pagamentosContaCatB,
+      }
+    : undefined;
 
   return {
     rendimentoBruto,
     deducaoEspecifica,
     ...(deducaoEspecificaDetalhe ? { deducaoEspecificaDetalhe } : {}),
+    abatimentoMinimoExistencia,
     rendimentoColetavel,
     baseParaTaxa,
     coleta,
@@ -189,7 +396,11 @@ export function calcularLiquidacao(
     deducoesColeta,
     beneficioMunicipal,
     coletaLiquida,
-    retencaoFonte,
+    ...(catF ? { catF } : {}),
+    impostoTotal,
+    ...(catB ? { catB } : {}),
+    pagamentosConta,
+    retencaoFonte: retencaoTotal,
     impostoApurado,
     taxaMediaEfetiva,
   };

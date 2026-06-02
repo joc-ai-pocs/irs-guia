@@ -19,6 +19,19 @@ export const config2026: TaxYearConfig = {
   deducaoEspecificaCoef: 8.54,
   deducaoEspecificaMinima: 4483.5, // 525 × 8.54 = 4483.5 — recalcular após confirmar IAS
 
+  // Art. 70.º n.º 1 CIRS — confirmar contra OE 2026 antes de uso real.
+  // 1.5 × 14 × 525 = 11 025 < 12 880 → V = 12 880 (limiar fixo a confirmar).
+  valorReferenciaMinimoExistencia: 12880,
+  limiteDespesasGerais: 250,
+
+  // Art. 72.º CIRS — confirmar contra OE 2026 antes de uso real.
+  taxasCatF: {
+    padrao: 0.25,
+    duracao5a10: 0.15,
+    duracao10a20: 0.10,
+    duracao20mais: 0.05,
+  },
+
   escaloes: [
     // TODO: substituir pela tabela da Lei 73-A/2025
     { numero: 1, limiteSuperior: 8059,                       taxaNormal: 0.125, taxaMedia: 0.125,    parcelaAbater: 0       },
