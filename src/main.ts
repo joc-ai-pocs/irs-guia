@@ -50,11 +50,19 @@ function anoFromUrl(): number | null {
   return TAX_YEARS[ano] ? ano : null;
 }
 
-/** Persists the selected income year in the URL (no page reload, no history entry). */
+/**
+ * Persists the selected income year in the URL (no page reload, no history entry).
+ * Best-effort: in contexts where history manipulation is forbidden (file://,
+ * sandboxed iframes), the year switch still works — it just isn't shareable.
+ */
 function setAnoInUrl(ano: number): void {
-  const url = new URL(window.location.href);
-  url.searchParams.set('ano', String(ano));
-  window.history.replaceState(null, '', url);
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('ano', String(ano));
+    window.history.replaceState(null, '', url);
+  } catch {
+    // Ignore: URL sync is a convenience, not a requirement.
+  }
 }
 
 function App(config: TaxYearConfig, activeTab?: string): HTMLElement {
