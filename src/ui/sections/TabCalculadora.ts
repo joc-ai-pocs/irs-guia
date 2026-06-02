@@ -21,6 +21,8 @@ import './TabCalculadora.css';
 const INITIAL_SCOPE: VisibleGroups = {
   trabalho: true,
   pensoes: true,
+  catF: false,
+  catB: false,
   deducoesColeta: true,
 };
 
@@ -68,14 +70,20 @@ function buildAnexos(scope: VisibleGroups): readonly AnexoSpec[] {
     {
       id: 'Anexo F',
       title: 'Rendimentos prediais',
-      description: 'Rendas (cat. F) — ainda não modelado pelo engine.',
-      estado: 'nao-aplicavel',
+      description:
+        'Rendas (cat. F) — tributação autónoma 25% (ou taxa reduzida para contratos longos). Pode optar pelo englobamento.',
+      estado: 'conforme',
+      scopeKey: 'catF',
+      active: scope.catF,
     },
     {
       id: 'Anexo D',
       title: 'Transparência fiscal',
-      description: 'Imputação especial — ainda não modelado pelo engine.',
-      estado: 'nao-aplicavel',
+      description:
+        'Imputação especial (cat. B) — matéria coletável imputada por sociedade transparente. Englobada nos escalões progressivos (art. 20.º CIRS).',
+      estado: 'conforme',
+      scopeKey: 'catB',
+      active: scope.catB,
     },
   ];
 }
@@ -119,6 +127,8 @@ export function TabCalculadora(config: TaxYearConfig): HTMLElement {
     onToggle: (key, active) => {
       if (key === 'trabalho') scope.trabalho = active;
       else if (key === 'pensoes') scope.pensoes = active;
+      else if (key === 'catF') scope.catF = active;
+      else if (key === 'catB') scope.catB = active;
       else if (key === 'deducoesColeta') scope.deducoesColeta = active;
       calculator.setVisibleGroups(scope);
     },
