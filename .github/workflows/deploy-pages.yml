@@ -1,0 +1,68 @@
+# Deploys the Vite production build to GitHub Pages.
+#
+# Requirements (one-time, repo Settings → Pages):
+#   Source: "GitHub Actions". The configure-pages step below tries to enable
+#   this automatically; if it fails, set it manually.
+#
+# Note: Pages on private repos requires a paid GitHub plan. On public repos
+# it is free. The published site is publicly accessible either way.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      # Temporary: deploy the year-filter branch until it is merged to main.
+      - feat/year-filter
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One Pages deployment at a time; let in-flight deploys finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Build (base path = repo name, required for project Pages)
+        run: npm run build -- --base=/irs-guia/
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
