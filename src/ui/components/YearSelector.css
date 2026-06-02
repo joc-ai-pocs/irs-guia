@@ -1,0 +1,60 @@
+.year-selector {
+  margin-bottom: var(--sp-5);
+}
+
+.year-selector__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.year-selector__label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-right: var(--sp-2);
+}
+
+.year-selector__btn {
+  padding: var(--sp-2) var(--sp-4);
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+
+.year-selector__btn:hover {
+  border-color: var(--brick);
+  color: var(--brick);
+}
+
+.year-selector__btn--active {
+  background: var(--brick);
+  border-color: var(--brick);
+  color: var(--paper);
+}
+
+.year-selector__btn--active:hover {
+  color: var(--paper);
+}
+
+.year-selector__flag {
+  margin-left: var(--sp-1);
+}
+
+.year-selector__aviso {
+  margin-top: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--warn);
+}
