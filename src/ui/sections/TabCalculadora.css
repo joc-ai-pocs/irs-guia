@@ -19,9 +19,8 @@
 .tab-calculadora__col-result .bracket-bar__range { font-size: 11px; }
 .tab-calculadora__col-result .bracket-bar__bar { margin: var(--sp-6) 0 var(--sp-4); }
 
-/* Calculator inputs stay a single column so the labels and hints don't get
- * cramped on the narrower half. */
-.tab-calculadora__col-inputs .calculator__grid { grid-template-columns: 1fr; gap: var(--sp-4); }
+/* Calculator inputs stack vertically by anexo section; reduce input font size
+ * a notch so the narrower half-column stays readable. */
 .tab-calculadora__col-inputs .calculator__field input { font-size: 18px; }
 
 /* Result column: BracketBar above, then a card-styled "Resultado do cálculo"
@@ -65,9 +64,4 @@
   .tab-calculadora__grid {
     grid-template-columns: 1fr;
   }
-  .tab-calculadora__col-inputs .calculator__grid { grid-template-columns: 1fr 1fr; }
-}
-
-@media (max-width: 600px) {
-  .tab-calculadora__col-inputs .calculator__grid { grid-template-columns: 1fr; }
 }

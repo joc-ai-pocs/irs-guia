@@ -2,6 +2,7 @@ import type { TaxYearConfig } from '@/tax-data/types';
 import {
   calcularLiquidacao,
   type DeducaoEspecificaCategoria,
+  type DuracaoContratoF,
   type LiquidacaoInput,
   type LiquidacaoResult,
 } from '@/engine';
@@ -21,6 +22,10 @@ export interface VisibleGroups {
   readonly trabalho: boolean;
   /** Cat. H input (pensões). */
   readonly pensoes: boolean;
+  /** Cat. F inputs (rendas brutas + despesas + taxa + retenção + englobamento). */
+  readonly catF: boolean;
+  /** Cat. B / Anexo D inputs (imputação especial + retenção + pag. por conta). */
+  readonly catB: boolean;
   /** Anexo H inputs (deduções à coleta + benefício municipal). */
   readonly deducoesColeta: boolean;
 }
@@ -28,8 +33,51 @@ export interface VisibleGroups {
 export const DEFAULT_VISIBLE_GROUPS: VisibleGroups = {
   trabalho: true,
   pensoes: true,
+  catF: false,
+  catB: false,
   deducoesColeta: true,
 };
+
+/**
+ * Display-only section spec used to group the input fields into visually
+ * distinct blocks that mirror the {@link AnexosHeader} cards. Each section
+ * carries an eyebrow label (matching its card) and a tone driving the accent
+ * color. Sections corresponding to toggleable groups disappear when the user
+ * deselects the matching card; "rosto" and "retencoes" are always visible.
+ */
+type GroupKey =
+  | 'rosto'
+  | 'trabalho'
+  | 'pensoes'
+  | 'catF'
+  | 'catB'
+  | 'deducoesColeta'
+  | 'retencoes';
+
+interface SectionSpec {
+  readonly key: GroupKey;
+  /** Mono uppercase label shown above the section (e.g. "ANEXO A · CAT. A"). */
+  readonly eyebrow: string;
+  /** Plain-language title shown next to the eyebrow. */
+  readonly title: string;
+  /**
+   * Visual tone driving the accent color:
+   *  - "obrigatorio": brick (matches always-required cards)
+   *  - "conforme":    gold (matches "Conforme aplicável" cards)
+   *  - "meta":        muted (Rosto sub-data and Retenções — not anexos themselves)
+   */
+  readonly tone: 'obrigatorio' | 'conforme' | 'meta';
+}
+
+const SECTIONS: readonly SectionSpec[] = [
+  { key: 'rosto', eyebrow: 'Rosto', title: 'Folha de rosto', tone: 'meta' },
+  { key: 'trabalho', eyebrow: 'Anexo A · cat. A', title: 'Trabalho dependente', tone: 'obrigatorio' },
+  { key: 'pensoes', eyebrow: 'Anexo A · cat. H', title: 'Pensões', tone: 'conforme' },
+  { key: 'deducoesColeta', eyebrow: 'Anexo H', title: 'Deduções à coleta', tone: 'conforme' },
+  { key: 'catF', eyebrow: 'Anexo F', title: 'Rendimentos prediais (rendas)', tone: 'conforme' },
+  { key: 'catB', eyebrow: 'Anexo D', title: 'Transparência fiscal (imputação cat. B)', tone: 'conforme' },
+  { key: 'retencoes', eyebrow: 'Retenções', title: 'Retidas pela entidade pagadora', tone: 'meta' },
+];
 
 export interface CalculatorProps {
   readonly config: TaxYearConfig;
@@ -76,10 +124,16 @@ export interface CalculatorHandle {
   readonly setVisibleGroups: (groups: VisibleGroups) => void;
 }
 
-type GroupKey = 'trabalho' | 'pensoes' | 'deducoesColeta' | 'always';
+
+/**
+ * Pseudo-ids used for cat. F deductible expenses. They live on the same input
+ * grid as {@link LiquidacaoInput} fields but are aggregated into a
+ * {@link DespesasCatF} sub-object before being sent to the engine.
+ */
+type DespesaCatFKey = 'despesaIMI' | 'despesaCondominio' | 'despesaConservacao';
 
 interface FieldSpec {
-  readonly id: keyof Required<LiquidacaoInput>;
+  readonly id: keyof Required<LiquidacaoInput> | DespesaCatFKey;
   readonly label: string;
   readonly hint: string;
   readonly step: string;
@@ -111,10 +165,24 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
   // The municipal benefit is 1% applied to the collection AFTER deductions to
   // the collection — (1 092,75 − 307,97) × 1% = 7,85 €, reproducing that note's
   // "Benefício Municipal". Adjust per município (0%–5%) as needed.
+  //
+  // Cat. F defaults are illustrative (used only when the user activates the
+  // anexo); they represent a small rental property with typical expenses.
   const defaults = {
     rendimentoTrabalho: props.initial?.rendimentoTrabalho ?? 13054.76,
     contribuicoesTrabalho: props.initial?.contribuicoesTrabalho ?? 1436.05,
     rendimentoPensoes: props.initial?.rendimentoPensoes ?? 3571.62,
+    rendasBrutas: props.initial?.rendasBrutas ?? 9600,
+    despesaIMI: props.initial?.despesasCatF?.imi ?? 320,
+    despesaCondominio: props.initial?.despesasCatF?.condominio ?? 480,
+    despesaConservacao: props.initial?.despesasCatF?.conservacao ?? 0,
+    duracaoCatF: (props.initial?.duracaoCatF ?? 'padrao') as DuracaoContratoF,
+    retencaoCatF: props.initial?.retencaoCatF ?? 0,
+    englobarCatF: props.initial?.englobarCatF ?? false,
+    // Cat. B / Anexo D defaults — illustrative single-shareholder case.
+    imputacaoCatB: props.initial?.imputacaoCatB ?? 5000,
+    retencaoCatB: props.initial?.retencaoCatB ?? 0,
+    pagamentosContaCatB: props.initial?.pagamentosContaCatB ?? 0,
     deducoesColeta: props.initial?.deducoesColeta ?? 307.97,
     beneficioMunicipalPct: props.initial?.beneficioMunicipalPct ?? 0.01,
     retencaoFonte: props.initial?.retencaoFonte ?? 103,
@@ -150,6 +218,70 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
       group: 'pensoes',
     },
     {
+      id: 'rendasBrutas',
+      label: 'Rendas brutas cat. F (€)',
+      hint: 'Total recebido durante o ano (Anexo F, quadro 4)',
+      step: '100',
+      initialValue: defaults.rendasBrutas,
+      group: 'catF',
+    },
+    {
+      id: 'despesaIMI',
+      label: 'IMI pago (€)',
+      hint: 'Despesa dedutível — art. 41.º CIRS',
+      step: '10',
+      initialValue: defaults.despesaIMI,
+      group: 'catF',
+    },
+    {
+      id: 'despesaCondominio',
+      label: 'Condomínio (€)',
+      hint: 'Despesa dedutível — art. 41.º CIRS',
+      step: '10',
+      initialValue: defaults.despesaCondominio,
+      group: 'catF',
+    },
+    {
+      id: 'despesaConservacao',
+      label: 'Conservação / manutenção (€)',
+      hint: 'Obras nos 24 meses antes do arrendamento ou durante — art. 41.º',
+      step: '10',
+      initialValue: defaults.despesaConservacao,
+      group: 'catF',
+    },
+    {
+      id: 'retencaoCatF',
+      label: 'Retenção na fonte cat. F (€)',
+      hint: 'Total retido sobre rendas (inquilino-empresa, 25%)',
+      step: '10',
+      initialValue: defaults.retencaoCatF,
+      group: 'catF',
+    },
+    {
+      id: 'imputacaoCatB',
+      label: 'Matéria coletável imputada (€)',
+      hint: 'Lucro/prejuízo imputado pela sociedade transparente — valor dado pelo contabilista (Anexo D, quadro 4)',
+      step: '100',
+      initialValue: defaults.imputacaoCatB,
+      group: 'catB',
+    },
+    {
+      id: 'retencaoCatB',
+      label: 'Retenções na fonte imputadas (€)',
+      hint: 'IRC retido sobre rendimentos da sociedade, imputado ao sócio',
+      step: '10',
+      initialValue: defaults.retencaoCatB,
+      group: 'catB',
+    },
+    {
+      id: 'pagamentosContaCatB',
+      label: 'Pagamentos por conta imputados (€)',
+      hint: 'PPC efetuados pela sociedade transparente — abate na linha 23 da nota',
+      step: '10',
+      initialValue: defaults.pagamentosContaCatB,
+      group: 'catB',
+    },
+    {
       id: 'deducoesColeta',
       label: 'Deduções à coleta (€)',
       hint: 'Saúde, educação, e-fatura — apuradas pela AT',
@@ -170,18 +302,18 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
     {
       id: 'retencaoFonte',
       label: 'Retenção na fonte (€)',
-      hint: 'Total retido pela entidade patronal/pagadora',
+      hint: 'Total retido sobre rendimentos cat. A/H (entidade pagadora). A retenção cat. F tem campo próprio.',
       step: '10',
       initialValue: defaults.retencaoFonte,
-      group: 'always',
+      group: 'retencoes',
     },
     {
       id: 'quocienteFamiliar',
       label: 'Quociente familiar',
-      hint: '1 = individual · 2 = tributação conjunta de casal',
+      hint: '1 = individual · 2 = tributação conjunta de casal (Rosto, quadro 5)',
       step: '0.5',
       initialValue: defaults.quocienteFamiliar,
-      group: 'always',
+      group: 'rosto',
       min: 1,
       max: 2,
     },
@@ -195,7 +327,11 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
   };
 
   function isGroupVisible(g: GroupKey): boolean {
-    if (g === 'always') return true;
+    // "rosto" and "retencoes" are not user-toggleable — they're always visible
+    // (Rosto = identification, Retenções = transversal final-line input). The
+    // remaining keys map 1:1 onto the {@link VisibleGroups} toggles driven by
+    // the card row.
+    if (g === 'rosto' || g === 'retencoes') return true;
     return visibleGroups[g];
   }
 
@@ -227,6 +363,28 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
     const beneficioMunicipalPct =
       visibleGroups.deducoesColeta ? val('beneficioMunicipalPct') : 0;
 
+    // Cat. F is opt-in (default off). When on, the deductible expenses are
+    // packed into a DespesasCatF sub-object — the engine handles the rest.
+    const rendasBrutas = visibleGroups.catF ? val('rendasBrutas') : undefined;
+    const despesasCatF =
+      visibleGroups.catF
+        ? {
+            imi: val('despesaIMI'),
+            condominio: val('despesaCondominio'),
+            conservacao: val('despesaConservacao'),
+          }
+        : undefined;
+    const duracaoCatF: DuracaoContratoF | undefined = visibleGroups.catF
+      ? (duracaoSelect.value as DuracaoContratoF)
+      : undefined;
+    const retencaoCatF = visibleGroups.catF ? val('retencaoCatF') : undefined;
+    const englobarCatF = visibleGroups.catF ? englobarInput.checked : undefined;
+
+    // Cat. B / Anexo D — opt-in.
+    const imputacaoCatB = visibleGroups.catB ? val('imputacaoCatB') : undefined;
+    const retencaoCatB = visibleGroups.catB ? val('retencaoCatB') : undefined;
+    const pagamentosContaCatB = visibleGroups.catB ? val('pagamentosContaCatB') : undefined;
+
     return {
       // Canonical combined field — derived from the per-category inputs so that
       // persisted exercícios stay backward-compatible and self-describing.
@@ -234,6 +392,14 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
       ...(rendimentoTrabalho !== undefined ? { rendimentoTrabalho } : {}),
       ...(contribuicoesTrabalho !== undefined ? { contribuicoesTrabalho } : {}),
       ...(rendimentoPensoes !== undefined ? { rendimentoPensoes } : {}),
+      ...(rendasBrutas !== undefined ? { rendasBrutas } : {}),
+      ...(despesasCatF !== undefined ? { despesasCatF } : {}),
+      ...(duracaoCatF !== undefined ? { duracaoCatF } : {}),
+      ...(retencaoCatF !== undefined ? { retencaoCatF } : {}),
+      ...(englobarCatF !== undefined ? { englobarCatF } : {}),
+      ...(imputacaoCatB !== undefined ? { imputacaoCatB } : {}),
+      ...(retencaoCatB !== undefined ? { retencaoCatB } : {}),
+      ...(pagamentosContaCatB !== undefined ? { pagamentosContaCatB } : {}),
       deducoesColeta,
       beneficioMunicipalPct,
       retencaoFonte: val('retencaoFonte'),
@@ -254,6 +420,16 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
     setField('rendimentoTrabalho', input.rendimentoTrabalho ?? input.rendimentoBruto);
     setField('contribuicoesTrabalho', input.contribuicoesTrabalho ?? 0);
     setField('rendimentoPensoes', input.rendimentoPensoes ?? 0);
+    setField('rendasBrutas', input.rendasBrutas ?? 0);
+    setField('despesaIMI', input.despesasCatF?.imi ?? 0);
+    setField('despesaCondominio', input.despesasCatF?.condominio ?? 0);
+    setField('despesaConservacao', input.despesasCatF?.conservacao ?? 0);
+    setField('retencaoCatF', input.retencaoCatF ?? 0);
+    duracaoSelect.value = input.duracaoCatF ?? 'padrao';
+    englobarInput.checked = input.englobarCatF ?? false;
+    setField('imputacaoCatB', input.imputacaoCatB ?? 0);
+    setField('retencaoCatB', input.retencaoCatB ?? 0);
+    setField('pagamentosContaCatB', input.pagamentosContaCatB ?? 0);
     // Loaded inputs may target a different scope than the current one — sync
     // visibility flags from what the snapshot actually carries.
     visibleGroups = {
@@ -262,6 +438,8 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
         input.contribuicoesTrabalho !== undefined ||
         input.rendimentoBruto > 0,
       pensoes: input.rendimentoPensoes !== undefined,
+      catF: input.rendasBrutas !== undefined,
+      catB: input.imputacaoCatB !== undefined,
       deducoesColeta:
         (input.deducoesColeta ?? 0) > 0 || (input.beneficioMunicipalPct ?? 0) > 0,
     };
@@ -281,12 +459,21 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
     const quociente = input.quocienteFamiliar ?? 1;
 
     const linhas: (HTMLElement | null)[] = [
+      // Line 01 — gross income now includes cat. B imputado (per AT note).
       row('01 Rendimento global', formatEUR(r.rendimentoBruto)),
       row('02 Dedução específica', `− ${formatEUR(r.deducaoEspecifica)}`),
       r.deducaoEspecificaDetalhe
         ? deducaoBreakdown(r.deducaoEspecificaDetalhe, r.deducaoEspecifica, props.config.deducaoEspecificaCoef)
         : null,
-      row('06 Rendimento coletável', formatEUR(r.rendimentoColetavel), { total: true }),
+      // Line 04 — abatimento por mínimo de existência. Only rendered when > 0
+      // (the most common case, especially for AT-generated notes, is zero).
+      r.abatimentoMinimoExistencia > 0
+        ? row(
+            '04 − Abatimento por mín. de existência',
+            `− ${formatEUR(r.abatimentoMinimoExistencia)}`,
+          )
+        : null,
+      row('05 Rendimento coletável', formatEUR(r.rendimentoColetavel), { total: true }),
       row(`10 ÷ Quociente familiar (${quociente})`, formatEUR(r.baseParaTaxa), { gap: true }),
       row(
         '→ Escalão',
@@ -305,12 +492,31 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
         `− ${formatEUR(r.beneficioMunicipal)}`,
       ),
       row('22 Coleta líquida', formatEUR(r.coletaLiquida), { total: true }),
-      row('24 − Retenção na fonte', `− ${formatEUR(r.retencaoFonte)}`, { gap: true }),
+      // Cat. F autonomous block (only when there's cat. F and no englobamento).
+      r.catF && !r.catF.englobada
+        ? catFBreakdown(r.catF, props.config)
+        : null,
+      r.catF
+        ? row('Imposto total (cat. A/H + cat. F)', formatEUR(r.impostoTotal), { total: true })
+        : null,
+      // Line 23 — only shown when there's something to abate (cat. B today).
+      r.pagamentosConta > 0
+        ? row('23 − Pagamentos por conta', `− ${formatEUR(r.pagamentosConta)}`, { gap: true })
+        : null,
+      row(
+        '24 − Retenção na fonte',
+        `− ${formatEUR(r.retencaoFonte)}`,
+        r.pagamentosConta > 0 ? {} : { gap: true },
+      ),
       row(
         'Taxa média efetiva (sobre o bruto)',
         formatPercent(r.taxaMediaEfetiva),
         { gap: true },
       ),
+      // Pedagogical "what if you had englobed?" note — only when cat. F is on.
+      r.catF
+        ? englobamentoNota(input, props.config, r)
+        : null,
     ];
     output.replaceChildren(...linhas.filter((n): n is HTMLElement => n !== null));
 
@@ -340,40 +546,151 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
   }
 
   // Per-field DOM wrappers indexed by FieldSpec id, so applyGroupVisibility()
-  // can collapse them via CSS without rebuilding the form.
-  const fieldElements = new Map<FieldSpec['id'], HTMLElement>();
+  // can collapse them via CSS without rebuilding the form. Cat. F also has
+  // two non-numeric controls (lease-duration select + englobamento switch);
+  // they're tracked here under stable ids so they participate in the same
+  // visibility logic.
+  const fieldElements = new Map<string, HTMLElement>();
+
+  // Cat. F — lease-duration select. Values map 1:1 onto DuracaoContratoF.
+  const duracaoSelect = h('select', { id: 'calc-duracaoCatF' }) as HTMLSelectElement;
+  ([
+    ['padrao', 'Sem prazo / curta duração — 25%'],
+    ['duracao5a10', '> 5 e ≤ 10 anos — 15%'],
+    ['duracao10a20', '> 10 e ≤ 20 anos — 10%'],
+    ['duracao20mais', '> 20 anos — 5%'],
+  ] as const).forEach(([value, label]) => {
+    const opt = h('option', { value }, label);
+    duracaoSelect.appendChild(opt);
+  });
+  duracaoSelect.value = defaults.duracaoCatF;
+  duracaoSelect.addEventListener('change', recompute);
+  const duracaoField = h(
+    'div',
+    { class: 'calculator__field', 'data-group': 'catF' },
+    h('label', { for: 'calc-duracaoCatF' }, 'Duração do contrato'),
+    duracaoSelect,
+    h(
+      'div',
+      { class: 'calculator__hint' },
+      'Art. 72.º n.º 2 — taxas reduzidas para contratos de longa duração',
+    ),
+  );
+  fieldElements.set('duracaoCatF', duracaoField);
+
+  // Cat. F — englobamento switch (checkbox). When ON, the engine routes the
+  // cat. F net income through the progressive brackets instead of taxing it
+  // autonomously. Useful only when the marginal rate is below the autonomous
+  // rate (typically lower brackets).
+  const englobarInput = h('input', {
+    type: 'checkbox',
+    id: 'calc-englobarCatF',
+  }) as HTMLInputElement;
+  englobarInput.checked = defaults.englobarCatF;
+  englobarInput.addEventListener('change', recompute);
+  const englobarField = h(
+    'div',
+    { class: 'calculator__field calculator__field--switch', 'data-group': 'catF' },
+    englobarInput,
+    h(
+      'label',
+      { for: 'calc-englobarCatF' },
+      'Optar pelo englobamento (art. 22.º)',
+    ),
+    h(
+      'div',
+      { class: 'calculator__hint' },
+      'Soma as rendas líquidas aos rendimentos cat. A/H. Só compensa em escalões baixos.',
+    ),
+  );
+  fieldElements.set('englobarCatF', englobarField);
+
+  // Build each FieldSpec's DOM up-front (without attaching), then assemble
+  // them inside per-anexo sections below. The two non-FieldSpec controls
+  // (duracaoField, englobarField) already exist from the cat. F setup above.
+  const builtFields = new Map<FieldSpec['id'], HTMLElement>();
+  for (const spec of fields) {
+    const input = h('input', {
+      type: 'number',
+      id: `calc-${spec.id}`,
+      value: String(spec.initialValue),
+      step: spec.step,
+      min: spec.min !== undefined ? String(spec.min) : null,
+      max: spec.max !== undefined ? String(spec.max) : null,
+    });
+    inputs.set(spec.id, input);
+    input.addEventListener('input', recompute);
+    const field = h(
+      'div',
+      { class: 'calculator__field', 'data-group': spec.group },
+      h('label', { for: `calc-${spec.id}` }, spec.label),
+      input,
+      h('div', { class: 'calculator__hint' }, spec.hint),
+    );
+    fieldElements.set(spec.id, field);
+    builtFields.set(spec.id, field);
+  }
+
+  // Section elements by group key — used by applyGroupVisibility() to hide/
+  // show the whole anexo block (eyebrow + fields together).
+  const sectionElements = new Map<GroupKey, HTMLElement>();
+
+  /**
+   * Build one anexo-aware section: eyebrow + title + every field belonging to
+   * this group, in declaration order. Cat. F's section also receives the
+   * lease-duration select and the englobamento switch.
+   */
+  function buildSection(spec: SectionSpec): HTMLElement {
+    const groupFields = fields
+      .filter((f) => f.group === spec.key)
+      .map((f) => builtFields.get(f.id))
+      .filter((el): el is HTMLElement => el !== undefined);
+
+    const children: HTMLElement[] = [
+      h(
+        'div',
+        { class: `calculator__section-header calculator__section-header--${spec.tone}` },
+        h('span', { class: 'calculator__section-eyebrow' }, spec.eyebrow),
+        h('span', { class: 'calculator__section-title' }, spec.title),
+      ),
+      ...groupFields,
+    ];
+
+    if (spec.key === 'catF') {
+      children.push(duracaoField, englobarField);
+    }
+
+    const section = h(
+      'section',
+      {
+        class: `calculator__section calculator__section--${spec.tone}`,
+        'data-group': spec.key,
+      },
+      ...children,
+    );
+    sectionElements.set(spec.key, section);
+    return section;
+  }
 
   const grid = h(
     'div',
     { class: 'calculator__grid' },
-    ...fields.map((spec) => {
-      const input = h('input', {
-        type: 'number',
-        id: `calc-${spec.id}`,
-        value: String(spec.initialValue),
-        step: spec.step,
-        min: spec.min !== undefined ? String(spec.min) : null,
-        max: spec.max !== undefined ? String(spec.max) : null,
-      });
-      inputs.set(spec.id, input);
-      input.addEventListener('input', recompute);
-      const field = h(
-        'div',
-        { class: 'calculator__field', 'data-group': spec.group },
-        h('label', { for: `calc-${spec.id}` }, spec.label),
-        input,
-        h('div', { class: 'calculator__hint' }, spec.hint),
-      );
-      fieldElements.set(spec.id, field);
-      return field;
-    }),
+    ...SECTIONS.map(buildSection),
   );
 
   function applyGroupVisibility(): void {
+    // Individual fields still get their `hidden` flag set — defensive in case
+    // anything outside the section box queries them — but the visible/hidden
+    // unit is the section as a whole.
     for (const spec of fields) {
       const el = fieldElements.get(spec.id);
       if (!el) continue;
       el.hidden = !isGroupVisible(spec.group);
+    }
+    duracaoField.hidden = !isGroupVisible('catF');
+    englobarField.hidden = !isGroupVisible('catF');
+    for (const [key, section] of sectionElements) {
+      section.hidden = !isGroupVisible(key);
     }
   }
   applyGroupVisibility();
@@ -488,5 +805,95 @@ function row(label: string, value: string, opts: RowOpts = {}): HTMLElement {
     { class: cls },
     h('span', { class: 'calculator__row-label' }, label),
     h('span', { class: 'calculator__row-value' }, value),
+  );
+}
+
+const NOME_DURACAO: Record<DuracaoContratoF, string> = {
+  padrao: 'sem prazo / curta duração',
+  duracao5a10: '> 5 e ≤ 10 anos',
+  duracao10a20: '> 10 e ≤ 20 anos',
+  duracao20mais: '> 20 anos',
+};
+
+/**
+ * Renders the cat. F autonomous sub-calculation as a nested breakdown:
+ * rendas brutas − despesas dedutíveis = rendimento líquido, then × taxa.
+ * Only shown when englobamento is OFF (otherwise cat. F lives inside the
+ * progressive base and there's no separate autonomous collection to explain).
+ */
+function catFBreakdown(
+  catF: NonNullable<LiquidacaoResult['catF']>,
+  _config: TaxYearConfig,
+): HTMLElement {
+  const d = catF.deducao;
+  const formula = FormulaBlock({
+    label: `Cat. F (Anexo F) — tributação autónoma a ${formatPercent(catF.taxa)} (${NOME_DURACAO[catF.duracao]})`,
+    segments: [
+      { kind: 'text', value: `(rendas ${formatEUR(d.rendasBrutas)} − despesas ${formatEUR(d.despesasTotal)})` },
+      { kind: 'op', value: '×' },
+      { kind: 'text', value: ` ${formatPercent(catF.taxa)} ` },
+      { kind: 'op', value: '=' },
+      { kind: 'result', value: formatEUR(catF.coletaAutonoma) },
+    ],
+  });
+  const detalhe = h(
+    'p',
+    { class: 'calculator__deducao-nota' },
+    `Despesas: IMI ${formatEUR(d.imi)} + condomínio ${formatEUR(d.condominio)} + conservação ${formatEUR(d.conservacao)} = ${formatEUR(d.despesasTotal)}. Rendimento líquido = ${formatEUR(d.rendimentoLiquido)}.`,
+  );
+  const aviso = d.perdaPotencial
+    ? h(
+        'p',
+        { class: 'calculator__deducao-nota' },
+        'Atenção: despesas superam as rendas — perda potencial (não modelada aqui).',
+      )
+    : null;
+  return h(
+    'div',
+    { class: 'calculator__catf-block' },
+    h(
+      'div',
+      { class: 'calculator__catf-eyebrow' },
+      `Coleta cat. F: ${formatEUR(catF.coletaAutonoma)}${catF.retencao > 0 ? ` · Retenção fonte F: ${formatEUR(catF.retencao)}` : ''}`,
+    ),
+    formula,
+    detalhe,
+    aviso,
+  );
+}
+
+/**
+ * "What if you had englobed?" pedagogical note — calculates the alternative
+ * scenario and tells the user whether opting for englobamento would lower the
+ * imposto apurado. Only useful when the contribuinte has cat. F income.
+ */
+function englobamentoNota(
+  input: LiquidacaoInput,
+  config: TaxYearConfig,
+  current: LiquidacaoResult,
+): HTMLElement | null {
+  if (!current.catF) return null;
+  const alt = (() => {
+    try {
+      return calcularLiquidacao({ ...input, englobarCatF: !current.catF.englobada }, config);
+    } catch {
+      return null;
+    }
+  })();
+  if (!alt) return null;
+
+  const delta = alt.impostoApurado - current.impostoApurado;
+  const queremEnglobar = !current.catF.englobada;
+  const verb = queremEnglobar ? 'englobando' : 'NÃO englobando';
+  const tone =
+    delta > 1
+      ? `pagas mais ${formatEUR(delta)} — não compensa`
+      : delta < -1
+        ? `poupas ${formatEUR(-delta)} — compensa`
+        : 'o resultado é idêntico';
+  return h(
+    'p',
+    { class: 'calculator__englobamento-nota' },
+    `Cenário alternativo: ${verb} a cat. F, ${tone}. (Alt. apurado = ${formatEUR(alt.impostoApurado)}.)`,
   );
 }
