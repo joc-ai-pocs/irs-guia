@@ -1,4 +1,4 @@
-import type { TaxYearConfig } from '@/tax-data/types';
+import type { FonteOficial, TaxYearConfig } from '@/tax-data/types';
 import { requireFonte } from '@/tax-data';
 import {
   Section,
@@ -18,11 +18,13 @@ import calloutParcela from '@/content/seccao02_callout_parcela.md?raw';
  * the live simulator's BracketBar lives in the Calculadora tab.
  */
 export function Seccao02_Escaloes(config: TaxYearConfig): HTMLElement {
+  // `art68Seguinte` (next year's redaction) is optional — it only exists once
+  // the following year's table has been published.
   const fontes = [
     requireFonte(config, 'art68'),
-    requireFonte(config, 'art68_2026'),
-    requireFonte(config, 'lei55A'),
-  ];
+    config.fontes['art68Seguinte'],
+    requireFonte(config, 'diploma'),
+  ].filter((f): f is FonteOficial => f !== undefined);
 
   return Section({
     id: 'escaloes',
