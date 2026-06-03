@@ -4,7 +4,7 @@ Guia pedagógico interativo do IRS português — motor de cálculo separado de 
 
 ## Princípio arquitetural
 
-Três camadas que mudam a ritmos diferentes:
+Camadas que mudam a ritmos diferentes:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -14,7 +14,12 @@ Três camadas que mudam a ritmos diferentes:
 ├─────────────────────────────────────────────────────────┤
 │  ENGINE  (src/engine/)                                    │
 │  Funções puras, sem DOM. 100% testável.                   │
-│  Calcula coleta, líquida, imposto apurado.                │
+│  Coleta (3 métodos), líquida, cat. A/H/F/B, mínimo de    │
+│  existência, tributação individual/conjunta.             │
+├─────────────────────────────────────────────────────────┤
+│  STATE  (src/state/)                                      │
+│  Persistência de exercícios guardados (File System       │
+│  Access API, JSON, schema versionado).                    │
 ├─────────────────────────────────────────────────────────┤
 │  UI  (src/ui/)                                            │
 │  Vanilla TS + helpers de DOM tipados.                     │
@@ -41,35 +46,37 @@ npm run build        # production build to dist/
 src/
 ├── tax-data/
 │   ├── types.ts        # Escalao, TaxYearConfig, FonteOficial
+│   ├── 2024.ts         # Lei 33/2024 (tabela revista, verified)
 │   ├── 2025.ts         # Lei 55-A/2025 (verified)
 │   ├── 2026.ts         # Lei 73-A/2025 (stub, TO VERIFY)
-│   └── index.ts        # TAX_YEARS registry, getTaxYearConfig()
+│   └── index.ts        # TAX_YEARS registry, getTaxYearConfig(), requireFonte()
 │
 ├── engine/
-│   ├── escaloes.ts     # findEscalao, calcularDeducaoEspecifica
-│   ├── coleta.ts       # método 2 + método 3 do art. 68.º
-│   ├── liquidacao.ts   # pipeline completo (linhas 01–25 da AT)
-│   ├── *.test.ts       # cobertura crítica
-│   └── index.ts        # barrel
+│   ├── escaloes.ts        # findEscalao, calcularDeducaoEspecifica
+│   ├── coleta.ts          # métodos 1, 2 e 3 do art. 68.º
+│   ├── categoriaF.ts      # rendas: art. 41.º (deduções) + art. 72.º (taxas autónomas)
+│   ├── minimoExistencia.ts# abatimento do art. 70.º
+│   ├── liquidacao.ts      # pipeline completo (cat. A/H/F/B via Anexo D)
+│   ├── *.test.ts          # cobertura crítica (73 testes)
+│   └── index.ts           # barrel
+│
+├── state/
+│   ├── types.ts        # Exercicio, schema versionado, migrateExercicio, slugify
+│   ├── fs-storage.ts   # leitura/escrita via File System Access API
+│   └── handle-store.ts # persistência do directory handle
 │
 ├── ui/
 │   ├── dom.ts          # h(), fragment(), mount() — micro DSL tipado
 │   ├── format.ts       # formatEUR, formatPercent (pt-PT)
-│   └── components/
-│       ├── SectionHeader.{ts,css}
-│       ├── Lede.{ts,css}
-│       ├── SourceBox.{ts,css}
-│       ├── FormulaBlock.{ts,css}
-│       ├── Callout.{ts,css}
-│       ├── StepTable.{ts,css}
-│       ├── MarginalNote.{ts,css}
-│       └── index.ts
+│   ├── sections/       # 8 secções (Seccao01–08) + tabs (Guia/Calculadora/Resumo/Recursos)
+│   └── components/     # ~23 componentes (BracketBar, Calculator, SlicedIncome,
+│                       #   TabsNav, TableOfContents, ExerciciosPanel, …) + index.ts barrel
 │
 ├── styles/
 │   ├── tokens.css      # design tokens (Direção A)
 │   └── base.css        # reset + body + .page shell
 │
-└── main.ts             # entry point — demo da secção 04 do guia
+└── main.ts             # entry point — app completa (Hero + YearSelector + 4 tabs + Footer)
 ```
 
 ## Como adicionar um novo ano fiscal
@@ -91,15 +98,24 @@ A UI continua a funcionar sem alterações — basta um seletor de ano que escol
 
 - `tsconfig.json` está em modo **strict** + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`.
 - Os testes do motor cobrem casos canónicos do guia pedagógico (coletável de 15 650 € → coleta ≈ 2 413,84 €, etc.). Não escrever testes de UI — não vale o ROI para este projeto.
-- A configuração `2026.ts` é um stub. Validar todos os valores contra o Portal das Finanças antes de a usar para cálculos reais.
+- `2024.ts` (tabela revista pela Lei 33/2024) e `2025.ts` estão verificados contra fontes oficiais. `2026.ts` é um stub — validar todos os valores contra o Portal das Finanças antes de o usar para cálculos reais.
 - `src/types/*.d.ts` contém *type shims* mínimos para `*.css` (side-effect imports do Vite) e `vitest`. São substituídos pelos types reais quando `npm install` correr; existem para o `tsc --noEmit` funcionar isoladamente.
 - O helper `requireFonte(config, id)` em `@/tax-data` é a forma canónica de aceder a fontes oficiais — devolve `FonteOficial` em vez de `FonteOficial | undefined` (que o `noUncheckedIndexedAccess` força).
 
-## Roadmap próximo
+## Roadmap
 
-- [ ] Componentes interativos: `BracketBar`, `Calculator`, `SlicedIncome`
-- [ ] Componentes de meta-navegação: `TabsNav`, `TableOfContents`, `ResumoCard`, `ResourceCard`
-- [ ] Persistência dos 4 perfis (Perfil A, Perfil B, Perfil C, Perfil D) em localStorage
-- [ ] Suporte a Cat. F (rendas) no motor
-- [ ] Suporte a Anexo D (transparência fiscal) no motor
-- [ ] Suporte a tributação conjunta com dependentes
+Feito:
+
+- [x] Componentes interativos: `BracketBar`, `Calculator`, `SlicedIncome`
+- [x] Meta-navegação: `TabsNav`, `TableOfContents`, `ResumoCard`, tabs
+- [x] Persistência de exercícios guardados (File System Access API, `src/state/`)
+- [x] Cat. F (rendas) no motor
+- [x] Anexo D (transparência fiscal — cat. B imputada) no motor
+- [x] Tributação conjunta (quociente 1 ou 2)
+- [x] Anos fiscais 2024 e 2025 verificados
+
+Próximo:
+
+- [ ] Dependentes no quociente familiar
+- [ ] Mais categorias de rendimento além de A/H/F/D
+- [ ] Verificar e fechar `2026.ts` contra o Portal das Finanças
