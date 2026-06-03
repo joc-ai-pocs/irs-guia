@@ -146,6 +146,13 @@ export interface LiquidacaoResult {
   // line 10–18
   readonly baseParaTaxa: number;
   readonly coleta: ColetaResult;
+  /**
+   * Line 18 — coleta total = coleta progressiva (tabela art. 68.º) + imposto de
+   * tributações autónomas da cat. F (art. 72.º). Mirrors the AT note, where
+   * "Imposto de tribut. autónomas" is summed into "Coleta total" before the
+   * deductions to the collection. Equals the progressive collection alone when
+   * there is no autonomous cat. F (no rents, or englobamento on).
+   */
   readonly coletaTotal: number;
 
   // line 19–22
@@ -170,9 +177,9 @@ export interface LiquidacaoResult {
   };
 
   /**
-   * Total tax due in the period — `coletaLiquida + (catF.coletaAutonoma ?? 0)`.
-   * Equivalent to {@link coletaLiquida} when there is no cat. F or the income
-   * was englobed (the cat. F portion is already inside coletaLiquida).
+   * Total tax due in the period. Since the cat. F autonomous taxation is now
+   * folded into {@link coletaTotal} (and therefore into {@link coletaLiquida}),
+   * this equals {@link coletaLiquida}. Retained for backwards compatibility.
    */
   readonly impostoTotal: number;
 
@@ -349,28 +356,36 @@ export function calcularLiquidacao(
   // line 10 — base para taxa (após quociente familiar)
   const baseParaTaxa = rendimentoColetavel / quocienteFamiliar;
 
-  // lines 11–18 — coleta total (multiplica de volta pelo quociente)
+  // lines 11–17 — coleta da tabela progressiva (art. 68.º), multiplicada de
+  // volta pelo quociente familiar.
   const coleta = calcularColetaMetodo3(baseParaTaxa, config);
-  const coletaTotal = coleta.coleta * quocienteFamiliar;
+  const coletaProgressiva = coleta.coleta * quocienteFamiliar;
 
-  // lines 19–22 — coleta líquida
-  // The municipal benefit (participação variável dos municípios) applies to the
-  // collection AFTER the deductions to the collection are subtracted — not to
-  // the gross coleta total. So deduções à coleta come off first, then the
-  // municipal rate applies to whatever remains.
-  const coletaAposDeducoes = coletaTotal - deducoesColeta;
-  const beneficioMunicipal = Math.max(0, coletaAposDeducoes) * beneficioMunicipalPct;
-  const coletaLiquida = coletaAposDeducoes - beneficioMunicipal;
-
-  // Cat. F autonomous collection — only when englobamento is OFF. When ON the
-  // cat. F net income was already added to the progressive base and is now
-  // inside coletaLiquida; no separate autonomous tax applies.
+  // line 16 — imposto de tributações autónomas (cat. F, art. 72.º). Só quando o
+  // englobamento está OFF; com englobamento o rendimento predial já está dentro
+  // da base progressiva, sem coleta autónoma separada.
   const coletaAutonomaCatF =
     catFDeducao && !englobaCatF
       ? calcularColetaAutonomaF(catFDeducao.rendimentoLiquido, taxaCatF)
       : 0;
 
-  const impostoTotal = coletaLiquida + coletaAutonomaCatF;
+  // line 18 — coleta total = coleta progressiva + tributações autónomas.
+  // Espelha a nota da AT, onde "Imposto de tribut. autónomas" entra na "Coleta
+  // total" (antes das deduções à coleta).
+  const coletaTotal = coletaProgressiva + coletaAutonomaCatF;
+
+  // lines 19–22 — coleta líquida.
+  // As deduções à coleta abatem à coleta total (inclui a tributação autónoma).
+  // O benefício municipal (participação variável dos municípios) incide APENAS
+  // sobre a coleta progressiva da tabela (art. 68.º) — não sobre a tributação
+  // autónoma — pelo que a sua base é a coleta progressiva após deduções.
+  const baseBeneficioMunicipal = Math.max(0, coletaProgressiva - deducoesColeta);
+  const beneficioMunicipal = baseBeneficioMunicipal * beneficioMunicipalPct;
+  const coletaLiquida = coletaTotal - deducoesColeta - beneficioMunicipal;
+
+  // Imposto total do período — a tributação autónoma já está dentro de
+  // coletaLiquida (somada à coleta total), pelo que coincide com ela.
+  const impostoTotal = coletaLiquida;
 
   // line 23 — pagamentos por conta (only sourced from cat. B today).
   const pagamentosConta = temCatB ? pagamentosContaCatB : 0;

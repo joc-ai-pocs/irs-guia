@@ -146,9 +146,9 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
   it('adds the cat. F autonomous collection on top of the cat. A/H tax (default path)', () => {
     // Trabalho 14 135,53 € (cai em alínea c → abatimento 974,07) + rendas
     // brutas 12 000 € (despesas 2 000 € → líquido 10 000 €) taxadas a 25 %:
-    //   coletaLiquida cat. A/H = 826,07 (canonical pedagogical)
-    //   coletaAutonomaCatF = 10 000 × 25 % = 2 500
-    //   impostoTotal = 826,07 + 2 500 = 3 326,07
+    //   coleta progressiva A/H após ded/benef = 826,07 (canonical pedagogical)
+    //   coletaAutonomaCatF = 10 000 × 25 % = 2 500 (entra na coleta total)
+    //   coletaLiquida = impostoTotal = 826,07 + 2 500 = 3 326,07
     //   apurado = 3 326,07 − 968 = 2 358,07
     const result = calcularLiquidacao(
       {
@@ -167,7 +167,7 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
     expect(result.catF?.taxa).toBe(0.25);
     expect(result.catF?.deducao.rendimentoLiquido).toBe(10000);
     expect(result.catF?.coletaAutonoma).toBeCloseTo(2500, 2);
-    expect(result.coletaLiquida).toBeCloseTo(826.07, 1);
+    expect(result.coletaLiquida).toBeCloseTo(3326.07, 1);
     expect(result.impostoTotal).toBeCloseTo(3326.07, 1);
     expect(result.impostoApurado).toBeCloseTo(2358.07, 1);
   });
