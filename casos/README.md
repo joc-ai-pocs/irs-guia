@@ -11,18 +11,18 @@ nota de liquidação da AT mostra (`esperado`) — e confirma que o motor bate c
 
 ```bash
 npm run casos                      # corre tudo em casos/*.json
-npm run casos -- casos/exemplos.json   # só um ficheiro
+npm run casos -- casos/cobertura.json  # só um ficheiro
 npm run casos -- /caminho/outra-pasta  # uma pasta inteira
 ```
 
 O comando sai com código `1` se algum caso falhar.
 
-Ficheiros-semente nesta pasta:
+Ficheiros nesta pasta:
 
-- **`exemplos.json`** — casos reais/canónicos (notas da AT batidas ao cêntimo, um por categoria).
-- **`cobertura.json`** — varre as features do motor (tributação conjunta, reembolso, coleta zero, cat. F a 15% / retenção / englobamento, cat. B+F, taxa média, anos 2024 e 2025).
+- **`cobertura.json`** (versionado) — varre as features do motor (tributação conjunta, reembolso, coleta zero, cat. F a 15% / retenção / englobamento, cat. B+F, taxa média, anos 2024 e 2025). Números sintéticos, sem dados pessoais.
+- **`exemplos.json`** (local, **ignorado** pelo Git) — casos reais a partir de notas de liquidação da AT. Como contém valores reais de contribuintes, **não é versionado** (ver `.gitignore`); fica só na tua máquina. Cria-o tu com as tuas notas.
 
-Cria mais ficheiros `*.json` à vontade — todos são apanhados.
+Cria mais ficheiros `*.json` à vontade — todos são apanhados. Para casos com dados reais, mantém-nos fora do repositório (acrescenta ao `.gitignore`).
 
 ## Formato
 
