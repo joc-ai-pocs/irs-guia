@@ -1,15 +1,17 @@
 import type { TaxYearConfig } from './types';
+import { config2024 } from './2024';
 import { config2025 } from './2025';
 import { config2026 } from './2026';
 
 export type { TaxYearConfig, Escalao, DeducaoColeta, FonteOficial } from './types';
-export { config2025, config2026 };
+export { config2024, config2025, config2026 };
 
 /**
  * Registry of all known fiscal year configurations.
  * Add new years here once the corresponding file is verified.
  */
 export const TAX_YEARS: Readonly<Record<number, TaxYearConfig>> = {
+  2024: config2024,
   2025: config2025,
   2026: config2026,
 };
