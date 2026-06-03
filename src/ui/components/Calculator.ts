@@ -489,6 +489,19 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
       ),
       row('12 − Parcela a abater', `− ${formatEUR(r.coleta.parcelaAbater)}`),
       row('× Quociente familiar', `× ${quociente}`),
+      // Cat. F autonomous taxation (art. 72.º) — folded into the coleta total,
+      // exactly as the AT note sums "Imposto de tribut. autónomas" into "Coleta
+      // total". The breakdown card explains how the autonomous collection was
+      // computed; the summary line shows it joining the coleta total.
+      r.catF && !r.catF.englobada && r.catF.coletaAutonoma > 0
+        ? catFBreakdown(r.catF, props.config)
+        : null,
+      r.catF && !r.catF.englobada && r.catF.coletaAutonoma > 0
+        ? row(
+            '16 + Imposto de tribut. autónomas (cat. F)',
+            `+ ${formatEUR(r.catF.coletaAutonoma)}`,
+          )
+        : null,
       row('18 Coleta total', formatEUR(r.coletaTotal), { total: true }),
       row('19 − Deduções à coleta', `− ${formatEUR(r.deducoesColeta)}`, { gap: true }),
       row(
@@ -496,13 +509,6 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
         `− ${formatEUR(r.beneficioMunicipal)}`,
       ),
       row('22 Coleta líquida', formatEUR(r.coletaLiquida), { total: true }),
-      // Cat. F autonomous block (only when there's cat. F and no englobamento).
-      r.catF && !r.catF.englobada
-        ? catFBreakdown(r.catF, props.config)
-        : null,
-      r.catF
-        ? row('Imposto total (cat. A/H + cat. F)', formatEUR(r.impostoTotal), { total: true })
-        : null,
       // Line 23 — only shown when there's something to abate (cat. B today).
       r.pagamentosConta > 0
         ? row('23 − Pagamentos por conta', `− ${formatEUR(r.pagamentosConta)}`, { gap: true })

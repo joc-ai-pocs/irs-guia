@@ -185,3 +185,7 @@ coverage/
 
 # Personal saved IRS exercises — contain real taxpayer data, not for the repo
 exercises/
+
+# Private test cases with real AT settlement-note figures — kept local only.
+# Synthetic feature-coverage cases live in casos/cobertura.json (tracked).
+casos/exemplos.json

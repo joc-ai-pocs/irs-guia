@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "casos": "vite-node scripts/casos.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

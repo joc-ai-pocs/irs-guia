@@ -116,9 +116,10 @@ export interface LiquidacaoResult {
   // line 01–05
   /**
    * Line 01 — total gross income across all included categories
-   * (cat. A + cat. H + cat. B imputado). Cat. F rents are NOT counted here
-   * because they are taxed autonomously (or, when englobed, enter at the
-   * coletável level via {@link rendimentoColetavel}).
+   * (cat. A + cat. H + cat. B imputado, plus cat. F gross rents when the
+   * contribuinte opted for englobamento). Cat. F rents taxed autonomously
+   * (englobamento OFF) are NOT counted here — they sit outside the progressive
+   * base. Mirrors the "Rendimento global" line of the AT settlement note.
    */
   readonly rendimentoBruto: number;
   readonly deducaoEspecifica: number;
@@ -145,6 +146,13 @@ export interface LiquidacaoResult {
   // line 10–18
   readonly baseParaTaxa: number;
   readonly coleta: ColetaResult;
+  /**
+   * Line 18 — coleta total = coleta progressiva (tabela art. 68.º) + imposto de
+   * tributações autónomas da cat. F (art. 72.º). Mirrors the AT note, where
+   * "Imposto de tribut. autónomas" is summed into "Coleta total" before the
+   * deductions to the collection. Equals the progressive collection alone when
+   * there is no autonomous cat. F (no rents, or englobamento on).
+   */
   readonly coletaTotal: number;
 
   // line 19–22
@@ -169,9 +177,9 @@ export interface LiquidacaoResult {
   };
 
   /**
-   * Total tax due in the period — `coletaLiquida + (catF.coletaAutonoma ?? 0)`.
-   * Equivalent to {@link coletaLiquida} when there is no cat. F or the income
-   * was englobed (the cat. F portion is already inside coletaLiquida).
+   * Total tax due in the period. Since the cat. F autonomous taxation is now
+   * folded into {@link coletaTotal} (and therefore into {@link coletaLiquida}),
+   * this equals {@link coletaLiquida}. Retained for backwards compatibility.
    */
   readonly impostoTotal: number;
 
@@ -297,59 +305,87 @@ export function calcularLiquidacao(
         : 0;
   }
 
+  // Income from cat. A/H — the categories art. 70.º protects. Captured BEFORE
+  // cat. B and englobed cat. F join the base, for the predominance test below.
+  const rendimentoCatAH = rendimentoBruto;
+
   // Cat. B (Anexo D) — imputação especial joins the GROSS income (line 01) per
   // art. 20.º CIRS. The specific deduction (which only covers cat. A/H) is not
   // applied to it; what it ultimately escapes is the {@link rendimentoColetavel}
   // formula below, which subtracts only deducaoEspecifica (a cat. A/H quantity).
   rendimentoBruto += valorImputado;
 
-  // line 05 — rendimento coletável.
-  // The abatimento por mínimo de existência (line 04, art. 70.º CIRS) is
-  // computed automatically from the gross income and the specific deduction —
-  // see calcularMinimoExistencia for the 3-branch (a/b/c) formula and the
-  // known caveats about transcription ambiguity.
+  // Cat. F com opção pelo englobamento (art. 22.º): as rendas brutas entram no
+  // rendimento global (linha 01) e as despesas dedutíveis (art. 41.º) entram na
+  // dedução específica global — espelhando a nota de liquidação da AT, que
+  // engloba a cat. F em "Rendimento global" e "Deduções específicas" em vez de
+  // somar o líquido à parte. O líquido fica assim dentro de RB − DE.
+  const englobaCatF = temCatF && englobarCatF;
+  if (englobaCatF && catFDeducao) {
+    rendimentoBruto += catFDeducao.rendasBrutas;
+    deducaoEspecifica += catFDeducao.despesasTotal;
+  }
+
+  // line 04 — abatimento por mínimo de existência (art. 70.º CIRS), computado a
+  // partir do rendimento bruto englobado e da dedução específica — ver
+  // calcularMinimoExistencia para a fórmula das 3 alíneas (a/b/c).
+  // Só se aplica quando o rendimento é predominantemente da cat. A/H (ou
+  // art. 151.º, não modelado) — n.º 1. Rendimento predominantemente predial
+  // (cat. F) ou de imputação (cat. B) não é protegido, pelo que o abatimento
+  // não se aplica (senão a fórmula zerá-lo-ia indevidamente via o teto d)).
+  const art70Aplicavel =
+    rendimentoCatAH > 0 && rendimentoCatAH >= 0.5 * rendimentoBruto;
   const minExistencia = calcularMinimoExistencia(
     rendimentoBruto,
     deducaoEspecifica,
     config,
   );
-  const abatimentoMinimoExistencia = minExistencia.valor;
+  const abatimentoMinimoExistencia = art70Aplicavel ? minExistencia.valor : 0;
+  const abatimentoMinimoExistenciaDetalhe = art70Aplicavel
+    ? minExistencia
+    : { ...minExistencia, valor: 0 };
 
-  // line 05 — rendimento coletável.
-  // When the contribuinte opted for englobamento (art. 22.º), the cat. F net
-  // income is added to the progressive base (cat. F doesn't have a separate
-  // specific deduction because the rent expenses already reduced its income).
-  const englobaCatF = temCatF && englobarCatF;
-  const acrescimoEnglobamento = englobaCatF && catFDeducao ? catFDeducao.rendimentoLiquido : 0;
-  const rendimentoColetavel =
-    Math.max(0, rendimentoBruto - deducaoEspecifica - abatimentoMinimoExistencia) +
-    acrescimoEnglobamento;
+  // line 05 — rendimento coletável. A cat. F englobada já está dentro de
+  // rendimentoBruto − deducaoEspecifica (englobada acima), por isso não há
+  // acréscimo separado aqui.
+  const rendimentoColetavel = Math.max(
+    0,
+    rendimentoBruto - deducaoEspecifica - abatimentoMinimoExistencia,
+  );
 
   // line 10 — base para taxa (após quociente familiar)
   const baseParaTaxa = rendimentoColetavel / quocienteFamiliar;
 
-  // lines 11–18 — coleta total (multiplica de volta pelo quociente)
+  // lines 11–17 — coleta da tabela progressiva (art. 68.º), multiplicada de
+  // volta pelo quociente familiar.
   const coleta = calcularColetaMetodo3(baseParaTaxa, config);
-  const coletaTotal = coleta.coleta * quocienteFamiliar;
+  const coletaProgressiva = coleta.coleta * quocienteFamiliar;
 
-  // lines 19–22 — coleta líquida
-  // The municipal benefit (participação variável dos municípios) applies to the
-  // collection AFTER the deductions to the collection are subtracted — not to
-  // the gross coleta total. So deduções à coleta come off first, then the
-  // municipal rate applies to whatever remains.
-  const coletaAposDeducoes = coletaTotal - deducoesColeta;
-  const beneficioMunicipal = Math.max(0, coletaAposDeducoes) * beneficioMunicipalPct;
-  const coletaLiquida = coletaAposDeducoes - beneficioMunicipal;
-
-  // Cat. F autonomous collection — only when englobamento is OFF. When ON the
-  // cat. F net income was already added to the progressive base and is now
-  // inside coletaLiquida; no separate autonomous tax applies.
+  // line 16 — imposto de tributações autónomas (cat. F, art. 72.º). Só quando o
+  // englobamento está OFF; com englobamento o rendimento predial já está dentro
+  // da base progressiva, sem coleta autónoma separada.
   const coletaAutonomaCatF =
     catFDeducao && !englobaCatF
       ? calcularColetaAutonomaF(catFDeducao.rendimentoLiquido, taxaCatF)
       : 0;
 
-  const impostoTotal = coletaLiquida + coletaAutonomaCatF;
+  // line 18 — coleta total = coleta progressiva + tributações autónomas.
+  // Espelha a nota da AT, onde "Imposto de tribut. autónomas" entra na "Coleta
+  // total" (antes das deduções à coleta).
+  const coletaTotal = coletaProgressiva + coletaAutonomaCatF;
+
+  // lines 19–22 — coleta líquida.
+  // As deduções à coleta abatem à coleta total (inclui a tributação autónoma).
+  // O benefício municipal (participação variável dos municípios) incide APENAS
+  // sobre a coleta progressiva da tabela (art. 68.º) — não sobre a tributação
+  // autónoma — pelo que a sua base é a coleta progressiva após deduções.
+  const baseBeneficioMunicipal = Math.max(0, coletaProgressiva - deducoesColeta);
+  const beneficioMunicipal = baseBeneficioMunicipal * beneficioMunicipalPct;
+  const coletaLiquida = coletaTotal - deducoesColeta - beneficioMunicipal;
+
+  // Imposto total do período — a tributação autónoma já está dentro de
+  // coletaLiquida (somada à coleta total), pelo que coincide com ela.
+  const impostoTotal = coletaLiquida;
 
   // line 23 — pagamentos por conta (only sourced from cat. B today).
   const pagamentosConta = temCatB ? pagamentosContaCatB : 0;
@@ -363,11 +399,13 @@ export function calcularLiquidacao(
   const impostoApurado = impostoTotal - pagamentosConta - retencaoTotal;
 
   // derived: now uses impostoTotal so cat. F contribution is visible in the
-  // effective average rate. rendimentoBruto already includes cat. B imputado;
-  // we add cat. F gross rents on top because they sit outside the progressive
-  // base by default (autonomous taxation).
+  // effective average rate. rendimentoBruto already includes cat. B imputado
+  // (and cat. F gross rents when englobada); we add the cat. F gross rents on
+  // top ONLY when they are taxed autonomously (englobamento OFF), since those
+  // sit outside the progressive base.
   const baseRendimento =
-    rendimentoBruto + (temCatF && catFDeducao ? catFDeducao.rendasBrutas : 0);
+    rendimentoBruto +
+    (temCatF && catFDeducao && !englobaCatF ? catFDeducao.rendasBrutas : 0);
   const taxaMediaEfetiva = baseRendimento > 0 ? impostoTotal / baseRendimento : 0;
 
   const catF =
@@ -395,7 +433,7 @@ export function calcularLiquidacao(
     deducaoEspecifica,
     ...(deducaoEspecificaDetalhe ? { deducaoEspecificaDetalhe } : {}),
     abatimentoMinimoExistencia,
-    abatimentoMinimoExistenciaDetalhe: minExistencia,
+    abatimentoMinimoExistenciaDetalhe,
     rendimentoColetavel,
     baseParaTaxa,
     coleta,
