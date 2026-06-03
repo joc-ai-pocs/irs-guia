@@ -116,9 +116,10 @@ export interface LiquidacaoResult {
   // line 01–05
   /**
    * Line 01 — total gross income across all included categories
-   * (cat. A + cat. H + cat. B imputado). Cat. F rents are NOT counted here
-   * because they are taxed autonomously (or, when englobed, enter at the
-   * coletável level via {@link rendimentoColetavel}).
+   * (cat. A + cat. H + cat. B imputado, plus cat. F gross rents when the
+   * contribuinte opted for englobamento). Cat. F rents taxed autonomously
+   * (englobamento OFF) are NOT counted here — they sit outside the progressive
+   * base. Mirrors the "Rendimento global" line of the AT settlement note.
    */
   readonly rendimentoBruto: number;
   readonly deducaoEspecifica: number;
@@ -297,33 +298,53 @@ export function calcularLiquidacao(
         : 0;
   }
 
+  // Income from cat. A/H — the categories art. 70.º protects. Captured BEFORE
+  // cat. B and englobed cat. F join the base, for the predominance test below.
+  const rendimentoCatAH = rendimentoBruto;
+
   // Cat. B (Anexo D) — imputação especial joins the GROSS income (line 01) per
   // art. 20.º CIRS. The specific deduction (which only covers cat. A/H) is not
   // applied to it; what it ultimately escapes is the {@link rendimentoColetavel}
   // formula below, which subtracts only deducaoEspecifica (a cat. A/H quantity).
   rendimentoBruto += valorImputado;
 
-  // line 05 — rendimento coletável.
-  // The abatimento por mínimo de existência (line 04, art. 70.º CIRS) is
-  // computed automatically from the gross income and the specific deduction —
-  // see calcularMinimoExistencia for the 3-branch (a/b/c) formula and the
-  // known caveats about transcription ambiguity.
+  // Cat. F com opção pelo englobamento (art. 22.º): as rendas brutas entram no
+  // rendimento global (linha 01) e as despesas dedutíveis (art. 41.º) entram na
+  // dedução específica global — espelhando a nota de liquidação da AT, que
+  // engloba a cat. F em "Rendimento global" e "Deduções específicas" em vez de
+  // somar o líquido à parte. O líquido fica assim dentro de RB − DE.
+  const englobaCatF = temCatF && englobarCatF;
+  if (englobaCatF && catFDeducao) {
+    rendimentoBruto += catFDeducao.rendasBrutas;
+    deducaoEspecifica += catFDeducao.despesasTotal;
+  }
+
+  // line 04 — abatimento por mínimo de existência (art. 70.º CIRS), computado a
+  // partir do rendimento bruto englobado e da dedução específica — ver
+  // calcularMinimoExistencia para a fórmula das 3 alíneas (a/b/c).
+  // Só se aplica quando o rendimento é predominantemente da cat. A/H (ou
+  // art. 151.º, não modelado) — n.º 1. Rendimento predominantemente predial
+  // (cat. F) ou de imputação (cat. B) não é protegido, pelo que o abatimento
+  // não se aplica (senão a fórmula zerá-lo-ia indevidamente via o teto d)).
+  const art70Aplicavel =
+    rendimentoCatAH > 0 && rendimentoCatAH >= 0.5 * rendimentoBruto;
   const minExistencia = calcularMinimoExistencia(
     rendimentoBruto,
     deducaoEspecifica,
     config,
   );
-  const abatimentoMinimoExistencia = minExistencia.valor;
+  const abatimentoMinimoExistencia = art70Aplicavel ? minExistencia.valor : 0;
+  const abatimentoMinimoExistenciaDetalhe = art70Aplicavel
+    ? minExistencia
+    : { ...minExistencia, valor: 0 };
 
-  // line 05 — rendimento coletável.
-  // When the contribuinte opted for englobamento (art. 22.º), the cat. F net
-  // income is added to the progressive base (cat. F doesn't have a separate
-  // specific deduction because the rent expenses already reduced its income).
-  const englobaCatF = temCatF && englobarCatF;
-  const acrescimoEnglobamento = englobaCatF && catFDeducao ? catFDeducao.rendimentoLiquido : 0;
-  const rendimentoColetavel =
-    Math.max(0, rendimentoBruto - deducaoEspecifica - abatimentoMinimoExistencia) +
-    acrescimoEnglobamento;
+  // line 05 — rendimento coletável. A cat. F englobada já está dentro de
+  // rendimentoBruto − deducaoEspecifica (englobada acima), por isso não há
+  // acréscimo separado aqui.
+  const rendimentoColetavel = Math.max(
+    0,
+    rendimentoBruto - deducaoEspecifica - abatimentoMinimoExistencia,
+  );
 
   // line 10 — base para taxa (após quociente familiar)
   const baseParaTaxa = rendimentoColetavel / quocienteFamiliar;
@@ -363,11 +384,13 @@ export function calcularLiquidacao(
   const impostoApurado = impostoTotal - pagamentosConta - retencaoTotal;
 
   // derived: now uses impostoTotal so cat. F contribution is visible in the
-  // effective average rate. rendimentoBruto already includes cat. B imputado;
-  // we add cat. F gross rents on top because they sit outside the progressive
-  // base by default (autonomous taxation).
+  // effective average rate. rendimentoBruto already includes cat. B imputado
+  // (and cat. F gross rents when englobada); we add the cat. F gross rents on
+  // top ONLY when they are taxed autonomously (englobamento OFF), since those
+  // sit outside the progressive base.
   const baseRendimento =
-    rendimentoBruto + (temCatF && catFDeducao ? catFDeducao.rendasBrutas : 0);
+    rendimentoBruto +
+    (temCatF && catFDeducao && !englobaCatF ? catFDeducao.rendasBrutas : 0);
   const taxaMediaEfetiva = baseRendimento > 0 ? impostoTotal / baseRendimento : 0;
 
   const catF =
@@ -395,7 +418,7 @@ export function calcularLiquidacao(
     deducaoEspecifica,
     ...(deducaoEspecificaDetalhe ? { deducaoEspecificaDetalhe } : {}),
     abatimentoMinimoExistencia,
-    abatimentoMinimoExistenciaDetalhe: minExistencia,
+    abatimentoMinimoExistenciaDetalhe,
     rendimentoColetavel,
     baseParaTaxa,
     coleta,
