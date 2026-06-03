@@ -16,9 +16,11 @@ export const config2025: TaxYearConfig = {
   // 522.50 × 8.54 = 4462.15 (preserved as published)
   deducaoEspecificaMinima: 4462.15,
 
-  // Art. 70.º n.º 1 CIRS (Lei 73-A/2024): max(12 880, 1.5 × 14 × IAS).
-  // 1.5 × 14 × 522.50 = 10 972.50 < 12 880 → V = 12 880.
-  valorReferenciaMinimoExistencia: 12880,
+  // Art. 70.º n.º 1 CIRS — valor de referência do mínimo de existência para 2025.
+  // É o maior valor entre 14 × RMMG do ano (14 × 870 = 12 180) e 1.5 × 14 × IAS
+  // (1.5 × 14 × 522.50 = 10 972.50). Logo V = 12 180. (NOTA: 12 880 é o valor de
+  // 2026 — 14 × 920 — não o de 2025.)
+  valorReferenciaMinimoExistencia: 12180,
   // Art. 78.º-B CIRS — limite por sujeito passivo.
   limiteDespesasGerais: 250,
 

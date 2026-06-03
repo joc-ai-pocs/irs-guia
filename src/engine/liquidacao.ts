@@ -13,7 +13,7 @@ import {
   type DeducaoCategoriaF,
   type DuracaoContratoF,
 } from './categoriaF';
-import { calcularMinimoExistencia } from './minimoExistencia';
+import { calcularMinimoExistencia, type DetalheMinimoExistencia } from './minimoExistencia';
 
 /**
  * Inputs for a settlement-note-style calculation.
@@ -128,6 +128,12 @@ export interface LiquidacaoResult {
    * see that function for the caveat about the simplified formula.
    */
   readonly abatimentoMinimoExistencia: number;
+  /**
+   * Full breakdown of the abatimento por mínimo de existência (which alínea
+   * fired, V, L, the term subtracted, the cap). Lets the UI explain how the
+   * abatement was reached. Always present (mirrors {@link abatimentoMinimoExistencia}).
+   */
+  readonly abatimentoMinimoExistenciaDetalhe: DetalheMinimoExistencia;
   /**
    * Per-category breakdown of {@link deducaoEspecifica}. Present only when the
    * input used the per-category fields; omitted in the legacy single-income
@@ -389,6 +395,7 @@ export function calcularLiquidacao(
     deducaoEspecifica,
     ...(deducaoEspecificaDetalhe ? { deducaoEspecificaDetalhe } : {}),
     abatimentoMinimoExistencia,
+    abatimentoMinimoExistenciaDetalhe: minExistencia,
     rendimentoColetavel,
     baseParaTaxa,
     coleta,

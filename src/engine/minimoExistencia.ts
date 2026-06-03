@@ -19,12 +19,21 @@ export interface DetalheMinimoExistencia {
   readonly rendimentosBrutos: number;
   /** Specific deduction passed to the formula. */
   readonly deducaoEspecifica: number;
-  /** Reference value V = max(materialized, 1.5 × 14 × IAS). */
+  /** Reference value V = max(14 × RMMG, 1.5 × 14 × IAS). */
   readonly valorReferencia: number;
   /** Upper bound L per n.º 3 — derived from V, LDG, T1 and L1. */
   readonly limiteSuperior: number;
-  /** `LDG / T1` — the "soma das deduções específicas com Limite despesas gerais/taxa 1.º escalão". */
+  /** Limite superior do 1.º escalão (L1) — only used by alínea c). */
+  readonly limiteEscalao1: number;
+  /** `LDG / T1` term — abated in alíneas a) and b) (NOT in c)). */
+  readonly ldgSobreTaxa: number;
+  /**
+   * Deduction term abated by the chosen alínea: `DE + LDG/T1` for a) and b),
+   * just `DE` for c). Surfaced so the UI can show exactly what was subtracted.
+   */
   readonly termoDeducoes: number;
+  /** Multiplier on the income excess: 2.60 (b), 1.35 (c), or `null` (a). */
+  readonly coeficiente: number | null;
   /** Raw output of the alínea formula, before the n.º 2 d) cap. */
   readonly valorBruto: number;
   /** Cap from alínea d): `RB − DE` (the upper bound on the abatement). */
@@ -40,30 +49,28 @@ export interface DetalheMinimoExistencia {
  * redação dada pela Lei 73-A/2024 (e Lei 82/2023 + Lei 34/2024 nas alíneas b)
  * e c)).
  *
- * The article distinguishes three branches based on the gross income RB:
+ * The article distinguishes three branches based on the gross income RB. Note
+ * the asymmetry of the `LDG/T1` term: it is abated in a) and b) but NOT in c):
  *
- *   a) RB ≤ V          → abatimento = max(0, V − DE)
+ *   a) RB ≤ V          → abatimento = max(0, V − (DE + LDG/T1))
  *   b) V < RB ≤ L      → abatimento = max(0, V − 2.60 × (RB − V) − (DE + LDG/T1))
- *   c) RB > L          → abatimento = max(0, L − L1 − 1.35 × (RB − L) − (DE + LDG/T1))
+ *   c) RB > L          → abatimento = max(0, (L − L1) − 1.35 × (RB − L) − DE)
  *
  * In all branches the final value is then capped at `RB − DE` (n.º 2 d)) so
  * the abatement never exceeds the deductible income.
  *
  * Where:
- *   V   = valor de referência (max(12 880, 1.5 × 14 × IAS))
- *   L   = V − (LDG / T1) × 3.60 + L1 / 3.60 (interpreted so L > V)
+ *   V   = valor de referência (max(14 × RMMG, 1.5 × 14 × IAS))
+ *   L   = V − LDG / (T1 × 3.60) + L1 / 3.60 (interpreted so L > V)
  *   LDG = limite das despesas gerais familiares (art. 78.º-B)
  *   T1  = taxa do 1.º escalão
  *   L1  = limite superior do 1.º escalão
  *
- * **Caveat — known divergence from AT.** A real AT settlement note (a case the
- * user shared with RB = 14 381.99, DE = 4 462.15) produces abatement 641.34 €,
- * whereas this literal formula yields ~2 512.68 €. The discrepancy hints that
- * the `LDG/T1` term may use a different value than the literal art. 78.º-B
- * limit, or that an additional coefficient is missing in the published text we
- * read. The formula here is the best-effort transcription of the law as
- * available in the Portal das Finanças HTML; refine when the discrepancy is
- * resolved.
+ * Verified against a real AT settlement note (RB = 14 381.99, DE = 4 462.15,
+ * 2025 constants): with V = 12 180 the income falls in alínea c) and the
+ * formula yields 641.34 €, matching the AT to the cent. The coefficients (2.60,
+ * 1.35) are the redação dada pela Lei 33/2024; earlier years used different
+ * values (see the GPEARI study "A reforma do mínimo de existência", 2023).
  *
  * @param rendimentosBrutos total rendimento bruto (art. 70.º "RB")
  * @param deducaoEspecifica total dedução específica das categorias relevantes
@@ -80,7 +87,7 @@ export function calcularMinimoExistencia(
   const de = Math.max(0, deducaoEspecifica);
 
   // n.º 1 — valor de referência. The materialized field already encodes the
-  // `max(12 880, 1.5 × 14 × IAS)` decision.
+  // `max(14 × RMMG, 1.5 × 14 × IAS)` decision.
   const v = config.valorReferenciaMinimoExistencia;
 
   // Constants needed for L (n.º 3) and for the deduction term in alíneas b/c.
@@ -96,23 +103,32 @@ export function calcularMinimoExistencia(
   // tripartite structure).
   const limiteSuperior = v - ldg / (t1 * 3.6) + l1 / 3.6;
 
-  // Common deduction term for alíneas b) and c).
-  const termoDeducoes = de + ldg / t1;
+  // The `LDG/T1` term, abated only in alíneas a) and b).
+  const ldgSobreTaxa = ldg / t1;
 
   let alinea: AlineaMinimoExistencia;
+  let coeficiente: number | null;
+  let termoDeducoes: number;
   let valorBruto: number;
   if (rb <= v) {
-    // n.º 2 a)
+    // n.º 2 a) — abatimento = V − (DE + LDG/T1).
     alinea = 'a';
-    valorBruto = v - de;
+    coeficiente = null;
+    termoDeducoes = de + ldgSobreTaxa;
+    valorBruto = v - termoDeducoes;
   } else if (rb <= limiteSuperior) {
-    // n.º 2 b)
+    // n.º 2 b) — abatimento = V − 2.60 × (RB − V) − (DE + LDG/T1).
     alinea = 'b';
-    valorBruto = v - 2.6 * (rb - v) - termoDeducoes;
+    coeficiente = 2.6;
+    termoDeducoes = de + ldgSobreTaxa;
+    valorBruto = v - coeficiente * (rb - v) - termoDeducoes;
   } else {
-    // n.º 2 c)
+    // n.º 2 c) — abatimento = (L − L1) − 1.35 × (RB − L) − DE.
+    // The LDG/T1 term is NOT abated here (asymmetry of the law).
     alinea = 'c';
-    valorBruto = limiteSuperior - l1 - 1.35 * (rb - limiteSuperior) - termoDeducoes;
+    coeficiente = 1.35;
+    termoDeducoes = de;
+    valorBruto = limiteSuperior - l1 - coeficiente * (rb - limiteSuperior) - termoDeducoes;
   }
 
   // n.º 2 d) — clamp to [0, RB − DE].
@@ -127,7 +143,10 @@ export function calcularMinimoExistencia(
     deducaoEspecifica: de,
     valorReferencia: v,
     limiteSuperior,
+    limiteEscalao1: l1,
+    ldgSobreTaxa,
     termoDeducoes,
+    coeficiente,
     valorBruto,
     capAlineaD,
     valor,
