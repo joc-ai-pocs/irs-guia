@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://irs-guia/casos.schema.json",
+  "title": "Casos de teste da calculadora IRS",
+  "description": "Um ficheiro de casos: cada caso descreve um input (o que o contribuinte preenche) e os valores esperados na nota de liquidação da AT.",
+  "oneOf": [
+    { "type": "array", "items": { "$ref": "#/definitions/caso" } },
+    {
+      "type": "object",
+      "required": ["casos"],
+      "properties": {
+        "casos": { "type": "array", "items": { "$ref": "#/definitions/caso" } }
+      }
+    }
+  ],
+  "definitions": {
+    "caso": {
+      "type": "object",
+      "required": ["nome", "ano", "input", "esperado"],
+      "additionalProperties": false,
+      "properties": {
+        "nome": { "type": "string", "description": "Rótulo legível do caso." },
+        "ano": {
+          "type": "integer",
+          "description": "Ano dos rendimentos (2024, 2025, 2026)."
+        },
+        "fonte": {
+          "type": "string",
+          "description": "Proveniência (ex.: 'Nota de liquidação 2024')."
+        },
+        "notas": { "type": "string", "description": "Explicação livre do cenário." },
+        "tolerancia": {
+          "type": "number",
+          "description": "Tolerância numérica em euros. Por omissão 0.01 (cêntimo)."
+        },
+        "input": {
+          "type": "object",
+          "description": "Subconjunto dos campos do Modelo 3 (LiquidacaoInput).",
+          "required": ["rendimentoBruto"],
+          "additionalProperties": false,
+          "properties": {
+            "rendimentoBruto": {
+              "type": "number",
+              "description": "Rendimento bruto total cat. A/H. Ignorado se usar os campos por categoria abaixo (passa-se 0)."
+            },
+            "rendimentoTrabalho": { "type": "number", "description": "Bruto cat. A (trabalho)." },
+            "contribuicoesTrabalho": { "type": "number", "description": "Contribuições obrigatórias cat. A." },
+            "rendimentoPensoes": { "type": "number", "description": "Bruto cat. H (pensões)." },
+            "rendasBrutas": { "type": "number", "description": "Rendas brutas cat. F." },
+            "despesasCatF": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "imi": { "type": "number" },
+                "condominio": { "type": "number" },
+                "conservacao": { "type": "number" }
+              }
+            },
+            "duracaoCatF": {
+              "type": "string",
+              "enum": ["padrao", "duracao5a10", "duracao10a20", "duracao20mais"],
+              "description": "Bucket de duração do contrato → taxa autónoma (25/15/10/5%)."
+            },
+            "retencaoCatF": { "type": "number" },
+            "englobarCatF": { "type": "boolean", "description": "Opção pelo englobamento (art. 22.º)." },
+            "imputacaoCatB": { "type": "number", "description": "Imputação especial cat. B (Anexo D, art. 20.º)." },
+            "retencaoCatB": { "type": "number" },
+            "pagamentosContaCatB": { "type": "number" },
+            "deducaoEspecifica": {
+              "type": "number",
+              "description": "Override da dedução específica (só no caminho de rendimento único)."
+            },
+            "deducoesColeta": { "type": "number", "description": "Deduções à coleta (saúde, educação…)." },
+            "beneficioMunicipalPct": { "type": "number", "description": "Participação variável do município (0–0.05)." },
+            "retencaoFonte": { "type": "number" },
+            "quocienteFamiliar": { "type": "number", "description": "1 individual, 2 conjunta." }
+          }
+        },
+        "esperado": {
+          "type": "object",
+          "description": "Mapa de caminho-no-resultado → valor esperado. Ex.: 'coleta.escalao.numero': 2. Números comparados com tolerância; strings/booleanos exatos.",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": ["number", "string", "boolean"]
+          }
+        }
+      }
+    }
+  }
+}
