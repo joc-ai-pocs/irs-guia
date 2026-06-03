@@ -13,8 +13,10 @@ interface VitestExpectation {
   toBeLessThan(expected: number): void;
   toBeLessThanOrEqual(expected: number): void;
   toBeGreaterThan(expected: number): void;
+  toEqual(expected: unknown): void;
   toHaveLength(expected: number): void;
   toThrow(matcher?: string | RegExp): void;
+  readonly not: VitestExpectation;
 }
 
 // global form (works with vite.config.ts test.globals: true)

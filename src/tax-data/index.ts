@@ -15,6 +15,14 @@ export const TAX_YEARS: Readonly<Record<number, TaxYearConfig>> = {
 };
 
 /**
+ * All registered fiscal year configurations, ordered by ascending year.
+ * The UI uses this to build the year selector.
+ */
+export function listTaxYearConfigs(): readonly TaxYearConfig[] {
+  return Object.values(TAX_YEARS).sort((a, b) => a.ano - b.ano);
+}
+
+/**
  * Returns the configuration for the given income year, or throws if unknown.
  *
  * @param ano year in which income was earned (e.g. 2025)
