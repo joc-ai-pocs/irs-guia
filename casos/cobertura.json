@@ -119,6 +119,24 @@
         "coleta.escalao.numero": 4,
         "coletaTotal": 7193.84
       }
+    },
+    {
+      "nome": "Cat. A + Anexo D — 14 000 trabalho + 381,99 imputação cat. B",
+      "ano": 2025,
+      "notas": "A imputação cat. B (Anexo D) soma ao rendimento bruto (linha 01): 14 000 + 381,99 = 14 381,99. Dedução específica 4 462,15 (cat. A), abatimento 641,34 (alínea c) → coletável 9 278,50 (2.º escalão) → coleta 1 202,49. Sem retenções/PPC, é tudo o imposto apurado.",
+      "input": { "rendimentoBruto": 0, "rendimentoTrabalho": 14000, "imputacaoCatB": 381.99 },
+      "esperado": {
+        "rendimentoBruto": 14381.99,
+        "deducaoEspecifica": 4462.15,
+        "abatimentoMinimoExistencia": 641.34,
+        "abatimentoMinimoExistenciaDetalhe.alinea": "c",
+        "rendimentoColetavel": 9278.50,
+        "coleta.escalao.numero": 2,
+        "catB.imputacao": 381.99,
+        "coletaTotal": 1202.49,
+        "impostoTotal": 1202.49,
+        "impostoApurado": 1202.49
+      }
     }
   ]
 }
