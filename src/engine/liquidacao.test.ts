@@ -3,26 +3,27 @@ import { config2025 } from '@/tax-data/2025';
 import { calcularLiquidacao } from './liquidacao';
 
 // 2025 constants for reference in this file:
-//   V  (valor de referência mín. existência) = 12 880
-//   L  ≈ 14 563.06
-//   LDG/T1 (termo deduções em alíneas b/c) = 250 / 0.125 = 2 000
+//   V  (valor de referência mín. existência) = 12 180  (14 × RMMG 870)
+//   L  ≈ 13 863.06
+//   LDG/T1 (termo abatido em alíneas a/b; NÃO em c) = 250 / 0.125 = 2 000
+//   L1 (limite 1.º escalão) = 8 059
 //   IAS = 522.50
 //
 // Many test cases are crafted to land in specific art. 70.º branches so the
 // expected numbers are pedagogically clean and easy to recompute by hand.
 
 describe('calcularLiquidacao — full settlement note pipeline', () => {
-  it('canonical pedagogical example (RB in branch b → small reembolso)', () => {
-    // RB = 14 135,53 € → cai na alínea b (V < RB ≤ L).
-    //   abatimento = max(0, 12 880 − 2.60 × 1 255,53 − (4 462,15 + 2 000))
-    //              = max(0, 12 880 − 3 264,38 − 6 462,15)
-    //              = 3 153,47
-    //   coletável  = 14 135,53 − 4 462,15 − 3 153,47 = 6 519,91 (1.º escalão)
-    //   coleta     = 6 519,91 × 12,5 % = 814,99
-    //   após ded.  = 814,99 − 275,41 = 539,58
-    //   benef. mun = 539,58 × 1 % = 5,40
-    //   líquida    = 539,58 − 5,40 = 534,18
-    //   apurado    = 534,18 − 968 = −433,82 (reembolso)
+  it('canonical pedagogical example (RB in branch c → small reembolso)', () => {
+    // RB = 14 135,53 € → cai na alínea c (RB > L ≈ 13 863,06).
+    //   abatimento = max(0, (13 863,06 − 8 059) − 1.35 × (14 135,53 − 13 863,06) − 4 462,15)
+    //              = max(0, 5 804,06 − 367,84 − 4 462,15)
+    //              = 974,07
+    //   coletável  = 14 135,53 − 4 462,15 − 974,07 = 8 699,31 (2.º escalão)
+    //   coleta     = 8 699,31 × 16 % − 282,07 = 1 109,82
+    //   após ded.  = 1 109,82 − 275,41 = 834,41
+    //   benef. mun = 834,41 × 1 % = 8,34
+    //   líquida    = 834,41 − 8,34 = 826,07
+    //   apurado    = 826,07 − 968 = −141,93 (reembolso)
     const result = calcularLiquidacao(
       {
         rendimentoBruto: 14135.53,
@@ -33,21 +34,21 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
       config2025,
     );
 
-    expect(result.abatimentoMinimoExistencia).toBeCloseTo(3153.47, 1);
-    expect(result.rendimentoColetavel).toBeCloseTo(6519.91, 1);
-    expect(result.coleta.escalao.numero).toBe(1);
-    expect(result.coletaTotal).toBeCloseTo(814.99, 1);
-    expect(result.beneficioMunicipal).toBeCloseTo(5.4, 1);
-    expect(result.coletaLiquida).toBeCloseTo(534.18, 1);
-    expect(result.impostoApurado).toBeCloseTo(-433.82, 1);
+    expect(result.abatimentoMinimoExistencia).toBeCloseTo(974.07, 1);
+    expect(result.rendimentoColetavel).toBeCloseTo(8699.31, 1);
+    expect(result.coleta.escalao.numero).toBe(2);
+    expect(result.coletaTotal).toBeCloseTo(1109.82, 1);
+    expect(result.beneficioMunicipal).toBeCloseTo(8.34, 1);
+    expect(result.coletaLiquida).toBeCloseTo(826.07, 1);
+    expect(result.impostoApurado).toBeCloseTo(-141.93, 1);
   });
 
   it('produces a true reembolso when retenção exceeds coleta líquida', () => {
     // Same gross income as the canonical example but no deductions / benefit;
     // higher retention (1 500 €).
-    //   abatimento = 3 153,47, coletável = 6 519,91, coleta = 814,99,
-    //   coleta líquida = 814,99 (sem dedução à coleta nem benefício).
-    //   apurado = 814,99 − 1 500 = −685,01 (reembolso).
+    //   abatimento = 974,07, coletável = 8 699,31, coleta = 1 109,82,
+    //   coleta líquida = 1 109,82 (sem dedução à coleta nem benefício).
+    //   apurado = 1 109,82 − 1 500 = −390,18 (reembolso).
     const result = calcularLiquidacao(
       {
         rendimentoBruto: 14135.53,
@@ -57,7 +58,7 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
     );
 
     expect(result.impostoApurado).toBeLessThan(0);
-    expect(result.impostoApurado).toBeCloseTo(-685.01, 1);
+    expect(result.impostoApurado).toBeCloseTo(-390.18, 1);
   });
 
   it('respects the quociente familiar in joint taxation', () => {
@@ -143,12 +144,12 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
   });
 
   it('adds the cat. F autonomous collection on top of the cat. A/H tax (default path)', () => {
-    // Trabalho 14 135,53 € (caí em alínea b → abatimento 3 153,47) + rendas
+    // Trabalho 14 135,53 € (cai em alínea c → abatimento 974,07) + rendas
     // brutas 12 000 € (despesas 2 000 € → líquido 10 000 €) taxadas a 25 %:
-    //   coletaLiquida cat. A/H = 534,18 (canonical pedagogical)
+    //   coletaLiquida cat. A/H = 826,07 (canonical pedagogical)
     //   coletaAutonomaCatF = 10 000 × 25 % = 2 500
-    //   impostoTotal = 534,18 + 2 500 = 3 034,18
-    //   apurado = 3 034,18 − 968 = 2 066,18
+    //   impostoTotal = 826,07 + 2 500 = 3 326,07
+    //   apurado = 3 326,07 − 968 = 2 358,07
     const result = calcularLiquidacao(
       {
         rendimentoBruto: 14135.53,
@@ -166,9 +167,9 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
     expect(result.catF?.taxa).toBe(0.25);
     expect(result.catF?.deducao.rendimentoLiquido).toBe(10000);
     expect(result.catF?.coletaAutonoma).toBeCloseTo(2500, 2);
-    expect(result.coletaLiquida).toBeCloseTo(534.18, 1);
-    expect(result.impostoTotal).toBeCloseTo(3034.18, 1);
-    expect(result.impostoApurado).toBeCloseTo(2066.18, 1);
+    expect(result.coletaLiquida).toBeCloseTo(826.07, 1);
+    expect(result.impostoTotal).toBeCloseTo(3326.07, 1);
+    expect(result.impostoApurado).toBeCloseTo(2358.07, 1);
   });
 
   it('honors the reduced rate (15 %) for medium-term contracts', () => {
@@ -301,15 +302,13 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
     expect(result.rendimentoColetavel).toBeCloseTo(13592.61, 2);
   });
 
-  it('applies the alínea b) abatement when V < RB ≤ L', () => {
-    // RB = 14 381,99 (caso real do utilizador para validação literal do art. 70.º b)).
-    //   bruto = 12 880 − 2,60×(14 381,99 − 12 880) − (4 462,15 + 2 000)
-    //         = 12 880 − 3 905,17 − 6 462,15 = 2 512,68
-    // NOTE: a AT, num caso prático, deu 641,34 € — divergência conhecida que
-    // sinaliza ambiguidade na transcrição da fórmula (ver caveat em
-    // calcularMinimoExistencia).
+  it('reproduces the real AT note for the alínea c) abatement (RB = 14 381,99 → 641,34 €)', () => {
+    // Caso real do utilizador, batido ao cêntimo com a nota da AT. RB > L → alínea c):
+    //   bruto = (13 863,06 − 8 059) − 1,35×(14 381,99 − 13 863,06) − 4 462,15
+    //         = 5 804,06 − 700,56 − 4 462,15 = 641,34
     const result = calcularLiquidacao({ rendimentoBruto: 14381.99 }, config2025);
-    expect(result.abatimentoMinimoExistencia).toBeCloseTo(2512.68, 1);
+    expect(result.abatimentoMinimoExistenciaDetalhe.alinea).toBe('c');
+    expect(result.abatimentoMinimoExistencia).toBeCloseTo(641.34, 1);
   });
 
   it('reproduces the AT note for the cat. A + H demo (alínea c, abatement = 0)', () => {

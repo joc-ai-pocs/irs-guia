@@ -97,8 +97,9 @@ export interface TaxYearConfig {
   readonly deducaoEspecificaMinima: number;
   /**
    * Valor de referência do mínimo de existência (art. 70.º n.º 1 CIRS).
-   * Per Lei n.º 73-A/2024, equals `max(12 880, 1.5 × 14 × IAS)`. Stored as a
-   * materialized euro figure so historical rounding is preserved.
+   * Equals `max(14 × RMMG do ano, 1.5 × 14 × IAS)` (e.g. 11 480 em 2024,
+   * 12 180 em 2025, 12 880 em 2026). Stored as a materialized euro figure so
+   * historical rounding is preserved.
    */
   readonly valorReferenciaMinimoExistencia: number;
   /**

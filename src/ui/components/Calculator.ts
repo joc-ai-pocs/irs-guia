@@ -2,13 +2,14 @@ import type { TaxYearConfig } from '@/tax-data/types';
 import {
   calcularLiquidacao,
   type DeducaoEspecificaCategoria,
+  type DetalheMinimoExistencia,
   type DuracaoContratoF,
   type LiquidacaoInput,
   type LiquidacaoResult,
 } from '@/engine';
 import { h } from '@/ui/dom';
 import { formatEUR, formatPercent } from '@/ui/format';
-import { FormulaBlock } from './FormulaBlock';
+import { FormulaBlock, type FormulaSegment } from './FormulaBlock';
 import './Calculator.css';
 
 /**
@@ -473,6 +474,9 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
             `− ${formatEUR(r.abatimentoMinimoExistencia)}`,
           )
         : null,
+      r.abatimentoMinimoExistencia > 0
+        ? minExistenciaBreakdown(r.abatimentoMinimoExistenciaDetalhe, props.config)
+        : null,
       row('05 Rendimento coletável', formatEUR(r.rendimentoColetavel), { total: true }),
       row(`10 ÷ Quociente familiar (${quociente})`, formatEUR(r.baseParaTaxa), { gap: true }),
       row(
@@ -789,6 +793,127 @@ function deducaoBreakdown(
       { class: 'calculator__deducao-total' },
       `Total = ${detalhe.map((d) => formatEUR(d.valor)).join(' + ')} = ${formatEUR(total)}`,
     ),
+  );
+}
+
+const NOME_ALINEA: Record<DetalheMinimoExistencia['alinea'], string> = {
+  a: 'alínea a) — rendimento ≤ valor de referência',
+  b: 'alínea b) — entre o valor de referência e L',
+  c: 'alínea c) — rendimento acima de L',
+};
+
+/**
+ * Builds the FormulaBlock segments for the chosen alínea of art. 70.º. The
+ * three branches differ in shape (and in whether the LDG/T1 term is abated),
+ * so each gets its own substitution string ending in the gross formula value.
+ */
+function segmentosMinExistencia(d: DetalheMinimoExistencia): FormulaSegment[] {
+  const V = formatEUR(d.valorReferencia);
+  const RB = formatEUR(d.rendimentosBrutos);
+  const DE = formatEUR(d.deducaoEspecifica);
+  const ldg = formatEUR(d.ldgSobreTaxa);
+  const res: FormulaSegment = { kind: 'result', value: formatEUR(d.valorBruto) };
+
+  if (d.alinea === 'a') {
+    return [
+      { kind: 'text', value: `${V} − ( ${DE} + ${ldg} )` },
+      { kind: 'op', value: '=' },
+      res,
+    ];
+  }
+  if (d.alinea === 'b') {
+    return [
+      { kind: 'text', value: `${V} − 2,60 × ( ${RB} − ${V} ) − ( ${DE} + ${ldg} )` },
+      { kind: 'op', value: '=' },
+      res,
+    ];
+  }
+  // alínea c) — note: only DE is abated, not the LDG/T1 term.
+  const L = formatEUR(d.limiteSuperior);
+  const L1 = formatEUR(d.limiteEscalao1);
+  return [
+    { kind: 'text', value: `( ${L} − ${L1} ) − 1,35 × ( ${RB} − ${L} ) − ${DE}` },
+    { kind: 'op', value: '=' },
+    res,
+  ];
+}
+
+/**
+ * Expandable explanation of the abatimento por mínimo de existência (art. 70.º
+ * CIRS), mirroring {@link deducaoBreakdown}: shows which alínea fired, the
+ * substituted formula, what the LDG/T1 term means, and any cap.
+ */
+function minExistenciaBreakdown(
+  d: DetalheMinimoExistencia,
+  config: TaxYearConfig,
+): HTMLElement {
+  const t1 = config.escaloes[0]?.taxaNormal ?? 0;
+  const formula = FormulaBlock({
+    label: `Abatimento por mín. de existência — ${NOME_ALINEA[d.alinea]}`,
+    segments: segmentosMinExistencia(d),
+  });
+
+  const notas: HTMLElement[] = [];
+
+  // Why this branch — RB compared with V and L.
+  const comparacao =
+    d.alinea === 'a'
+      ? `é inferior ou igual ao valor de referência (${formatEUR(d.valorReferencia)})`
+      : d.alinea === 'b'
+        ? `está entre o valor de referência (${formatEUR(d.valorReferencia)}) e o limiar L (${formatEUR(d.limiteSuperior)})`
+        : `é superior ao limiar L (${formatEUR(d.limiteSuperior)})`;
+  notas.push(
+    h(
+      'p',
+      { class: 'calculator__deducao-nota' },
+      `O rendimento bruto (${formatEUR(d.rendimentosBrutos)}) ${comparacao}, por isso aplica-se a ${NOME_ALINEA[d.alinea]}.`,
+    ),
+  );
+
+  // The LDG/T1 term, only relevant for alíneas a) and b).
+  if (d.alinea !== 'c') {
+    notas.push(
+      h(
+        'p',
+        { class: 'calculator__deducao-nota' },
+        `LDG/T1 = limite das despesas gerais ${formatEUR(config.limiteDespesasGerais)} ÷ taxa do 1.º escalão ${formatPercent(t1)} = ${formatEUR(d.ldgSobreTaxa)}.`,
+      ),
+    );
+  } else {
+    notas.push(
+      h(
+        'p',
+        { class: 'calculator__deducao-nota' },
+        'Na alínea c) o termo LDG/T1 não é abatido — só a dedução específica.',
+      ),
+    );
+  }
+
+  // Clamps: negative formula → 0, or cap d) (RB − DE).
+  if (d.valorBruto < 0) {
+    notas.push(
+      h(
+        'p',
+        { class: 'calculator__deducao-nota' },
+        `A fórmula deu um valor negativo, por isso o abatimento fica em ${formatEUR(0)}.`,
+      ),
+    );
+  } else if (d.capAplicado) {
+    notas.push(
+      h(
+        'p',
+        { class: 'calculator__deducao-nota' },
+        `Limitado a rendimento − dedução = ${formatEUR(d.capAlineaD)} (art. 70.º n.º 2 d): o abatimento nunca torna o rendimento coletável negativo).`,
+      ),
+    );
+  }
+
+  return h(
+    'details',
+    { class: 'calculator__deducao-detalhe' },
+    h('summary', null, `Como se chega a ${formatEUR(d.valor)}?`),
+    formula,
+    ...notas,
   );
 }
 
