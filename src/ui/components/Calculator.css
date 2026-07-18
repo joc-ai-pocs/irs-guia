@@ -124,6 +124,19 @@
   color: var(--ink-faint);
 }
 
+/* SPEC-005 — invalid input state: parse failure, negative, or out of range.
+ * The hint element doubles as the error message (swapped in JS) and stays the
+ * aria-describedby target, so screen readers announce it alongside aria-invalid. */
+.calculator__field--invalid input,
+.calculator__field--invalid input:focus {
+  border-bottom-color: var(--warn);
+}
+
+.calculator__hint--error {
+  color: var(--warn);
+  font-weight: 500;
+}
+
 .calculator__output {
   background: var(--paper-2);
   padding: var(--sp-5) var(--sp-6);

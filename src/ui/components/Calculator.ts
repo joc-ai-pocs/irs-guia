@@ -8,7 +8,12 @@ import {
   type LiquidacaoResult,
 } from '@/engine';
 import { h } from '@/ui/dom';
-import { formatEUR, formatPercent } from '@/ui/format';
+import {
+  formatEUR,
+  formatNumberPtPT,
+  formatPercent,
+  parseNumberPtPT,
+} from '@/ui/format';
 import { FormulaBlock, type FormulaSegment } from './FormulaBlock';
 import './Calculator.css';
 
@@ -133,14 +138,30 @@ export interface CalculatorHandle {
  */
 type DespesaCatFKey = 'despesaIMI' | 'despesaCondominio' | 'despesaConservacao';
 
+/**
+ * How a field is parsed, formatted and validated (SPEC-005):
+ *  - `money`   euros — text input with pt-PT parsing, blur-reformatting, and a
+ *              non-negative (min 0) default. This is the default for a FieldSpec.
+ *  - `percent` a percentage entered as a plain number (e.g. `1` for 1 %).
+ *  - `plain`   a dimensionless number (e.g. the quociente familiar).
+ */
+type FieldKind = 'money' | 'percent' | 'plain';
+
 interface FieldSpec {
   readonly id: keyof Required<LiquidacaoInput> | DespesaCatFKey;
   readonly label: string;
   readonly hint: string;
   readonly step: string;
   readonly initialValue: number;
+  /**
+   * Lower/upper bounds, in field (display) space. Money fields default to a
+   * minimum of 0 when `min` is omitted. These live here so the constraints have
+   * a single source of truth (reused by the file validation of SPEC-010).
+   */
   readonly min?: number;
   readonly max?: number;
+  /** Parse/format/validation kind. Defaults to `money`. */
+  readonly kind?: FieldKind;
   /**
    * Which scope group this field belongs to. Fields in a group that is
    * currently hidden stay in the DOM but their `.calculator__field` wrapper
@@ -296,6 +317,9 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
       hint: 'Taxa de devolução do município (0% a 5%)',
       step: '0.1',
       initialValue: pctToField(defaults.beneficioMunicipalPct),
+      kind: 'percent',
+      min: 0,
+      max: 5,
       group: 'deducoesColeta',
       fromField: fieldToPct,
       toField: pctToField,
@@ -314,6 +338,7 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
       hint: '1 = individual · 2 = tributação conjunta de casal (Rosto, quadro 5)',
       step: '0.5',
       initialValue: defaults.quocienteFamiliar,
+      kind: 'plain',
       group: 'rosto',
       min: 1,
       max: 2,
@@ -340,6 +365,75 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
   const fieldSpecs = new Map<FieldSpec['id'], FieldSpec>();
   for (const spec of fields) fieldSpecs.set(spec.id, spec);
 
+  // SPEC-005: last known VALID value per field (in display/field space). An
+  // invalid or half-typed field keeps its previous good value instead of
+  // silently collapsing to zero — this is what getInputs() reads. Seeded from
+  // each field's initial value so the first calculation matches the defaults.
+  const lastValid = new Map<FieldSpec['id'], number>();
+  for (const spec of fields) lastValid.set(spec.id, spec.initialValue);
+
+  // Hint elements, so validation can swap the hint text for an inline error
+  // message (and restore it) while keeping a stable aria-describedby target.
+  const hintElements = new Map<FieldSpec['id'], HTMLElement>();
+
+  const kindOf = (spec: FieldSpec): FieldKind => spec.kind ?? 'money';
+
+  /** Effective lower bound: money fields are non-negative unless told otherwise. */
+  function effectiveMin(spec: FieldSpec): number | undefined {
+    if (spec.min !== undefined) return spec.min;
+    return kindOf(spec) === 'money' ? 0 : undefined;
+  }
+
+  /** Parse a field's raw text into a number (null = not a valid number). */
+  function parseField(spec: FieldSpec, rawText: string): number | null {
+    if (kindOf(spec) === 'money') return parseNumberPtPT(rawText);
+    const v = parseFloat(rawText);
+    return Number.isFinite(v) ? v : null;
+  }
+
+  /** Format a field's value for display in its input. */
+  function displayValue(spec: FieldSpec, value: number): string {
+    return kindOf(spec) === 'money' ? formatNumberPtPT(value) : String(value);
+  }
+
+  /** Returns the inline error for a value, or null when it is acceptable. */
+  function validationError(spec: FieldSpec, value: number | null): string | null {
+    const kind = kindOf(spec);
+    if (value === null) {
+      return kind === 'money'
+        ? 'Insere um valor em euros, ex.: 1 436,05'
+        : 'Insere um valor válido.';
+    }
+    const min = effectiveMin(spec);
+    if (min !== undefined && value < min) {
+      if (kind === 'money' && min === 0) return 'O valor não pode ser negativo.';
+      return `Valor mínimo: ${formatNumberPtPT(min)}${kind === 'percent' ? ' %' : ''}.`;
+    }
+    if (spec.max !== undefined && value > spec.max) {
+      return `Valor máximo: ${formatNumberPtPT(spec.max)}${kind === 'percent' ? ' %' : ''}.`;
+    }
+    return null;
+  }
+
+  /** Toggle a field's invalid state: border, aria-invalid, and the hint text. */
+  function setFieldError(spec: FieldSpec, message: string | null): void {
+    const field = fieldElements.get(spec.id);
+    const input = inputs.get(spec.id);
+    const hint = hintElements.get(spec.id);
+    if (!field || !input || !hint) return;
+    if (message === null) {
+      field.classList.remove('calculator__field--invalid');
+      input.removeAttribute('aria-invalid');
+      hint.textContent = spec.hint;
+      hint.classList.remove('calculator__hint--error');
+    } else {
+      field.classList.add('calculator__field--invalid');
+      input.setAttribute('aria-invalid', 'true');
+      hint.textContent = message;
+      hint.classList.add('calculator__hint--error');
+    }
+  }
+
   const output = h('div', { class: 'calculator__output' });
   const finalResult = h('div', { class: 'calculator__final' }, '—');
 
@@ -347,11 +441,11 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
 
   function getInputs(): LiquidacaoInput {
     function val(id: FieldSpec['id']): number {
-      const el = inputs.get(id);
-      if (!el) return 0;
-      const v = parseFloat(el.value);
-      const raw = Number.isFinite(v) ? v : 0;
       const spec = fieldSpecs.get(id);
+      // Read the last VALID value (never the raw DOM text): a field in the
+      // middle of an invalid edit keeps its previous value instead of
+      // silently collapsing to zero (SPEC-005).
+      const raw = lastValid.get(id) ?? spec?.initialValue ?? 0;
       return spec?.fromField ? spec.fromField(raw) : raw;
     }
     // Per-group reads: when a group is hidden, its inputs are excluded from
@@ -411,10 +505,14 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
   function setInputs(input: LiquidacaoInput): void {
     function setField(id: FieldSpec['id'], engineValue: number | undefined): void {
       const el = inputs.get(id);
-      if (!el || engineValue === undefined) return;
       const spec = fieldSpecs.get(id);
-      const display = spec?.toField ? spec.toField(engineValue) : engineValue;
-      el.value = String(display);
+      if (!el || !spec || engineValue === undefined) return;
+      // Convert engine → field space, remember it as the last valid value,
+      // clear any stale error, and render it with the field's formatting.
+      const fieldSpaceValue = spec.toField ? spec.toField(engineValue) : engineValue;
+      lastValid.set(id, fieldSpaceValue);
+      setFieldError(spec, null);
+      el.value = displayValue(spec, fieldSpaceValue);
     }
     // Legacy (v1) exercícios only carry `rendimentoBruto` — map that combined
     // value into cat. A so they keep loading without a schema migration.
@@ -620,22 +718,53 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
   // (duracaoField, englobarField) already exist from the cat. F setup above.
   const builtFields = new Map<FieldSpec['id'], HTMLElement>();
   for (const spec of fields) {
+    const kind = kindOf(spec);
+    const min = effectiveMin(spec);
+    const hintId = `calc-${spec.id}-hint`;
+    // Money fields are pt-PT text inputs (so "1 436,05" is accepted and shown);
+    // percent/plain stay as native number inputs with their step.
     const input = h('input', {
-      type: 'number',
+      type: kind === 'money' ? 'text' : 'number',
+      inputmode: kind === 'money' ? 'decimal' : null,
       id: `calc-${spec.id}`,
-      value: String(spec.initialValue),
-      step: spec.step,
-      min: spec.min !== undefined ? String(spec.min) : null,
+      value: displayValue(spec, spec.initialValue),
+      step: kind === 'money' ? null : spec.step,
+      min: min !== undefined ? String(min) : null,
       max: spec.max !== undefined ? String(spec.max) : null,
+      'aria-describedby': hintId,
     });
     inputs.set(spec.id, input);
-    input.addEventListener('input', recompute);
+
+    const hint = h('div', { class: 'calculator__hint', id: hintId }, spec.hint);
+    hintElements.set(spec.id, hint);
+
+    // Validate on every edit: mark the invalid state, and only commit the value
+    // to lastValid when it passes. The calculation reads lastValid (never the
+    // raw text), so an invalid field never silently zeroes the result.
+    input.addEventListener('input', () => {
+      const parsed = parseField(spec, input.value);
+      const error = validationError(spec, parsed);
+      setFieldError(spec, error);
+      if (error === null && parsed !== null) lastValid.set(spec.id, parsed);
+      recompute();
+    });
+    // On blur, re-render a valid money value in canonical pt-PT ("1 436,05").
+    // An invalid entry is left as-typed so the user can fix it.
+    if (kind === 'money') {
+      input.addEventListener('blur', () => {
+        const parsed = parseField(spec, input.value);
+        if (parsed !== null && validationError(spec, parsed) === null) {
+          input.value = displayValue(spec, parsed);
+        }
+      });
+    }
+
     const field = h(
       'div',
       { class: 'calculator__field', 'data-group': spec.group },
       h('label', { for: `calc-${spec.id}` }, spec.label),
       input,
-      h('div', { class: 'calculator__hint' }, spec.hint),
+      hint,
     );
     fieldElements.set(spec.id, field);
     builtFields.set(spec.id, field);
