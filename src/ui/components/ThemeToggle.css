@@ -1,0 +1,33 @@
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-2);
+  color: var(--ink-soft);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+
+.theme-toggle:hover {
+  color: var(--brick);
+  border-color: var(--brick);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--brick);
+  outline-offset: 2px;
+}
+
+/* Comfortable touch target on small screens. */
+@media (max-width: 720px) {
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+}

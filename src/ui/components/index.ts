@@ -19,6 +19,7 @@ export {
   type AnexoEstado,
 } from './AnexosHeader';
 export { Hero, type HeroProps, type HeroMetaItem } from './Hero';
+export { ThemeToggle } from './ThemeToggle';
 export { YearSelector, type YearSelectorProps } from './YearSelector';
 export { Section, type SectionProps } from './Section';
 export { Footer, type FooterProps } from './Footer';

@@ -31,6 +31,26 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--t-medium), color var(--t-medium);
+}
+
+/* Subtle warm glows tuned for the dark surface — the light-theme tints would
+   read as bright smudges against a near-black paper. */
+[data-theme='dark'] body {
+  background-image:
+    radial-gradient(ellipse at 15% 10%, rgba(232, 118, 90, 0.05), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(240, 233, 220, 0.025), transparent 55%);
+}
+
+/* Respect users who ask for less motion: drop smooth scroll, tab fade-ins,
+   and theme/element transitions. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 img, svg { display: block; max-width: 100%; }
@@ -47,6 +67,14 @@ a { color: inherit; }
 
 @media (max-width: 720px) {
   .page { padding: var(--sp-7) var(--sp-5); }
+}
+
+/* Thin top row holding page-level controls (theme switch), right-aligned. */
+.page__topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: var(--sp-4);
 }
 
 /* ─────────── typography utilities ─────────── */

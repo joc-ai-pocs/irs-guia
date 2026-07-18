@@ -8,6 +8,9 @@
  */
 
 :root {
+  /* Native form controls / scrollbars follow the active theme. */
+  color-scheme: light;
+
   /* ─────────── surfaces ─────────── */
   --paper:        #f5efe2;
   --paper-2:      #ede5d2;
@@ -65,4 +68,40 @@
   --grid-7: #c54a10;
   --grid-8: #9a3208;
   --grid-9: #6e1f04;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Dark theme — applied via [data-theme="dark"] on <html>.
+ *
+ * Only surfaces, ink, structure and accents are overridden. The bracket
+ * gradient (--grid-*) is left untouched on purpose: it is a saturated heat
+ * scale that reads well on any background and keeps text-on-step contrast
+ * identical across themes. The fiscal "brick" accent is lightened to a
+ * terracotta so it stays legible both as text on the dark paper and as a
+ * button background (with near-black --paper text).
+ * ───────────────────────────────────────────────────────────────────────── */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* surfaces */
+  --paper:        #1a1613;
+  --paper-2:      #221c17;
+  --paper-3:      #2b231b;
+
+  /* ink */
+  --ink:          #f0e9dc;
+  --ink-soft:     #c7bdac;
+  --ink-faint:    #8c8174;
+
+  /* structure */
+  --rule:         #38302a;
+  --rule-strong:  #50463a;
+
+  /* accents */
+  --brick:        #e8765a;
+  --brick-deep:   #f0937c;
+  --brick-soft:   #5a3228;
+  --gold:         #d4b56a;
+  --ok:           #6db86d;
+  --warn:         #e8765a;
 }

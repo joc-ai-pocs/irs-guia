@@ -1,7 +1,7 @@
 .hero {
   border-bottom: 1px solid var(--rule);
-  padding-bottom: var(--sp-7);
-  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-6);
+  margin-bottom: var(--sp-5);
   position: relative;
 }
 
