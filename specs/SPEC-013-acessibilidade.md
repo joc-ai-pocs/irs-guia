@@ -1,32 +1,32 @@
-# SPEC-013 — Accessibility completion: tabs, BracketBar, contrast, live results
+# SPEC-013 — Conclusão da acessibilidade: tabs, BracketBar, contraste, resultados anunciados
 
-- **Priority**: P1 · **Effort**: M · **Origin**: Software Architect, UX Designer · **Status**: Proposed
+- **Prioridade**: P1 · **Esforço**: M · **Origem**: Arquiteto de Software, UX Designer · **Estado**: Proposto
 
-## Problem
+## Problema
 
-The foundations are good (labels via `for`, `prefers-reduced-motion`, `aria-pressed` in YearSelector/ThemeToggle/AnexosHeader), but the signature interactions are mouse-only and the ARIA is half-finished:
+As fundações são boas (labels via `for`, `prefers-reduced-motion`, `aria-pressed` em YearSelector/ThemeToggle/AnexosHeader), mas as interações-assinatura são só-rato e o ARIA está a meio:
 
-- `TabsNav.ts` sets `role="tablist"`/`role="tab"` but never `aria-selected`, `aria-controls`/`id` pairs, `role="tabpanel"`, or arrow-key roving focus — announcing tab semantics without implementing them is worse than plain buttons.
-- `BracketBar.ts` syncs highlight exclusively via `mouseenter`; segments are `div`s with `title` tooltips — keyboard users can never trigger the highlight, touch users never see the range.
-- The Calculator output re-renders on every keystroke with no `aria-live`, so assistive tech never hears the result change. `Calculator.css` removes focus `outline`, leaving only a border-bottom colour change (WCAG 2.4.7).
-- Contrast: `--ink-faint` (#8a7d72) on `--paper` is ~3.5:1 — below AA — yet used for the smallest text (11px field labels, 10–11px eyebrows/badges). `ExerciciosPanel.css` hardcodes `#fff` on brick buttons (~2.9:1 in dark mode), violating the project's own no-hex-literals rule.
-- Cross-tab jumps (`TableOfContents`, `ResumoCard`) call `scrollIntoView` without moving focus.
+- `TabsNav.ts` define `role="tablist"`/`role="tab"` mas nunca `aria-selected`, pares `aria-controls`/`id`, `role="tabpanel"`, nem navegação por setas — anunciar semântica de tabs sem a implementar é pior do que botões simples.
+- `BracketBar.ts` sincroniza o destaque exclusivamente via `mouseenter`; os segmentos são `div`s com tooltips `title` — utilizadores de teclado nunca conseguem acionar o destaque, utilizadores de touch nunca veem o intervalo.
+- O output da Calculadora re-renderiza a cada tecla sem `aria-live`, pelo que a tecnologia de apoio nunca ouve o resultado mudar. `Calculator.css` remove o `outline` de foco, deixando só uma mudança de cor na borda inferior (WCAG 2.4.7).
+- Contraste: `--ink-faint` (#8a7d72) sobre `--paper` é ~3,5:1 — abaixo de AA — e é usado no texto mais pequeno (labels de campo de 11px, eyebrows/badges de 10–11px). `ExerciciosPanel.css` tem `#fff` hardcoded nos botões brick (~2,9:1 em dark mode), violando a própria regra do projeto de "sem literais hex".
+- Os saltos entre tabs (`TableOfContents`, `ResumoCard`) chamam `scrollIntoView` sem mover o foco.
 
-## Requirements
+## Requisitos
 
-1. Complete the tab pattern: `aria-selected`, `id`/`aria-controls`, `role="tabpanel"` on panes, Left/Right arrow roving `tabindex`.
-2. BracketBar segments become `<button>`s; `:focus-visible` triggers the same `setActive`; move range text from `title` into the visible seg label or an `aria-label`.
-3. Mark `calculator__final` (or the output container) `aria-live="polite"`.
-4. Restore `:focus-visible` outlines using the existing pattern from `AnexosHeader.css`; add `aria-expanded` to the ExerciciosPanel toggle (with SPEC-007).
-5. Tokens: darken `--ink-faint` to ≥4.5:1 against `--paper` in both themes (light ≈ #75685c) or promote labels/hints to `--ink-soft`; replace every `#fff` in `ExerciciosPanel.css` with `var(--paper)`.
-6. After cross-tab anchor jumps, `target.focus({ preventScroll: true })` on the section heading (`tabindex="-1"`).
+1. Completar o padrão de tabs: `aria-selected`, `id`/`aria-controls`, `role="tabpanel"` nos painéis, roving `tabindex` com setas Esquerda/Direita.
+2. Os segmentos da BracketBar passam a `<button>`; `:focus-visible` aciona o mesmo `setActive`; mover o texto do intervalo do `title` para o label visível do segmento ou um `aria-label`.
+3. Marcar `calculator__final` (ou o contentor de output) com `aria-live="polite"`.
+4. Repor os outlines `:focus-visible` usando o padrão existente de `AnexosHeader.css`; adicionar `aria-expanded` ao toggle do ExerciciosPanel (com a SPEC-007).
+5. Tokens: escurecer `--ink-faint` para ≥4,5:1 contra `--paper` em ambos os temas (claro ≈ #75685c) ou promover labels/hints a `--ink-soft`; substituir todos os `#fff` em `ExerciciosPanel.css` por `var(--paper)`.
+6. Após saltos de âncora entre tabs, `target.focus({ preventScroll: true })` no título da secção (`tabindex="-1"`).
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Full keyboard path: switch tabs with arrows, walk brackets with Tab/arrows, hear the recomputed result announced.
-- [ ] All text ≥4.5:1 in both themes (spot-check the 10–12px mono text).
-- [ ] No hex literals remain in component CSS.
+- [ ] Percurso completo por teclado: mudar de tab com setas, percorrer escalões com Tab/setas, ouvir o resultado recalculado anunciado.
+- [ ] Todo o texto ≥4,5:1 em ambos os temas (verificar em particular o mono de 10–12px).
+- [ ] Não resta nenhum literal hex no CSS dos componentes.
 
-## Touched areas
+## Áreas afetadas
 
 `src/ui/components/TabsNav.ts`, `BracketBar.ts/.css`, `Calculator.ts/.css`, `ExerciciosPanel.ts/.css`, `TableOfContents.ts`, `src/styles/tokens.css`

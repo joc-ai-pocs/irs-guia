@@ -1,27 +1,27 @@
-# SPEC-014 — Mobile: restore the feedback loop (sticky result + BracketBar fixes)
+# SPEC-014 — Mobile: repor o ciclo de feedback (resultado sticky + correções na BracketBar)
 
-- **Priority**: P1 · **Effort**: M · **Origin**: UX Designer · **Status**: Proposed
+- **Prioridade**: P1 · **Esforço**: M · **Origem**: UX Designer · **Estado**: Proposto
 
-## Problem
+## Problema
 
-Below 900px, `TabCalculadora.css` collapses to one column: intro → anexos cards → exercícios panel → full 7-section form → BracketBar → line-by-line output → final result. Editing "Rendimento cat. A" gives zero visible feedback; the user must scroll past everything to see the number change, then scroll back. The immediate cause-and-effect that justifies an interactive simulator is gone exactly on the platform where a public "check my IRS" audience mostly lives (WhatsApp-referred traffic is ~all mobile).
+Abaixo de 900px, `TabCalculadora.css` colapsa para uma coluna: intro → cartões de anexos → painel de exercícios → formulário completo de 7 secções → BracketBar → output linha a linha → resultado final. Editar "Rendimento cat. A" não dá feedback visível nenhum; o utilizador tem de fazer scroll por tudo para ver o número mudar, e voltar atrás para ajustar. A causa-efeito imediata que justifica um simulador interativo desaparece exatamente na plataforma onde vive a audiência pública de "ver o meu IRS" (tráfego vindo do WhatsApp é ~todo mobile).
 
-Additionally: BracketBar's 9 equal segments at 375px are ~38px wide with 13px mono labels, and its 6-column table has no `overflow-x` container — it squishes or overflows the page.
+Além disso: os 9 segmentos iguais da BracketBar a 375px têm ~38px de largura com labels mono de 13px, e a tabela de 6 colunas não tem contentor `overflow-x` — esmaga-se ou transborda da página.
 
-## Requirements
+## Requisitos
 
-1. On <900px, add a sticky bottom mini-bar showing the live final result ("1 234,56 € a receber" / "a pagar"), fed from the existing `finalElement` / `onChange` plumbing; tapping it scrolls to the full breakdown.
-2. The mini-bar respects safe-area insets, hides when the full result is already in view, and is `aria-hidden` (the canonical result remains the announced one — see SPEC-013's `aria-live`).
-3. Wrap `.bracket-bar__table` in an `overflow-x: auto` scroll container (page body must never scroll horizontally).
-4. On narrow screens, show per-segment labels only for the active segment; others on demand.
-5. Verify the Calculator's field grid, AnexosHeader cards, and ExerciciosPanel at 375px and 768px — no horizontal overflow anywhere in the tab.
+1. Em <900px, adicionar uma mini-barra sticky no fundo com o resultado final ao vivo ("1 234,56 € a receber" / "a pagar"), alimentada pelo plumbing existente `finalElement` / `onChange`; tocar nela faz scroll até à decomposição completa.
+2. A mini-barra respeita os safe-area insets, esconde-se quando o resultado completo já está visível, e é `aria-hidden` (o resultado canónico continua a ser o anunciado — ver o `aria-live` da SPEC-013).
+3. Envolver `.bracket-bar__table` num contentor com `overflow-x: auto` (o corpo da página nunca pode ter scroll horizontal).
+4. Em ecrãs estreitos, mostrar labels por segmento apenas no segmento ativo; os restantes a pedido.
+5. Verificar a grelha de campos da Calculadora, os cartões do AnexosHeader e o ExerciciosPanel a 375px e 768px — sem overflow horizontal em lado nenhum do tab.
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] On a 375px viewport, editing any income field shows the updated final amount without scrolling.
-- [ ] BracketBar table scrolls horizontally within its own container; page does not.
-- [ ] No layout overflow at 375/768/1280 in either theme.
+- [ ] Num viewport de 375px, editar qualquer campo de rendimento mostra o valor final atualizado sem scroll.
+- [ ] A tabela da BracketBar faz scroll horizontal dentro do próprio contentor; a página não.
+- [ ] Sem overflow de layout a 375/768/1280 em ambos os temas.
 
-## Touched areas
+## Áreas afetadas
 
 `src/ui/sections/TabCalculadora.ts/.css`, `src/ui/components/Calculator.ts`, `src/ui/components/BracketBar.css`

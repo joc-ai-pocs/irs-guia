@@ -1,29 +1,29 @@
-# SPEC-010 — Exercício data integrity: year mismatch on load + real file validation
+# SPEC-010 — Integridade dos exercícios: ano divergente no carregamento + validação real dos ficheiros
 
-- **Priority**: P1 · **Effort**: S · **Origin**: Product Owner, Software Architect · **Status**: Proposed
+- **Prioridade**: P1 · **Esforço**: S · **Origem**: Product Owner, Arquiteto de Software · **Estado**: Proposto
 
-## Problem
+## Problema
 
-1. **Year mismatch.** `ExerciciosPanel.load()` calls `calculator.setInputs(ex.inputs)` without comparing `ex.ano` to the app's selected year. Loading a 2024 exercício while 2025 is selected silently recomputes with 2025 brackets — contradicting the stored `snapshotResultado` with no warning. Clicking "Atualizar" then overwrites the file restamped `ano: 2025`, corrupting the historical record.
-2. **Shallow validation.** `migrateExercicio` (`src/state/types.ts`) checks only that `inputs` is an object. A hand-edited file with `"rendimentoTrabalho": "13k"` passes; `setInputs` writes the string into a number input, the browser blanks it, `getInputs` coerces to 0 — a plausible-looking but wrong calculation with no error.
-3. **Zero tests.** The pure functions in `state/types.ts` (`migrateExercicio`, `slugify`, `buildSnapshot`) have no tests; coverage config only includes `src/engine/**`.
+1. **Ano divergente.** `ExerciciosPanel.load()` chama `calculator.setInputs(ex.inputs)` sem comparar `ex.ano` com o ano selecionado na app. Carregar um exercício de 2024 com 2025 selecionado recalcula silenciosamente com os escalões de 2025 — contradizendo o `snapshotResultado` guardado, sem aviso. Clicar depois em "Atualizar" reescreve o ficheiro re-estampado com `ano: 2025`, corrompendo o registo histórico.
+2. **Validação superficial.** `migrateExercicio` (`src/state/types.ts`) só verifica que `inputs` é um objeto. Um ficheiro editado à mão com `"rendimentoTrabalho": "13k"` passa; `setInputs` escreve a string num input numérico, o browser esvazia-o, `getInputs` coage para 0 — um cálculo plausível mas errado, sem erro nenhum.
+3. **Zero testes.** As funções puras de `state/types.ts` (`migrateExercicio`, `slugify`, `buildSnapshot`) não têm testes; a config de cobertura só inclui `src/engine/**`.
 
-## Proposed solution
+## Solução proposta
 
-Respect each exercício's fiscal year on load; validate the numeric shape of what's loaded; test the state layer's pure functions.
+Respeitar o ano fiscal de cada exercício no carregamento; validar a forma numérica do que é carregado; testar as funções puras da camada de estado.
 
-## Requirements
+## Requisitos
 
-1. On load, if `ex.ano !== selected year`: switch the app's year to `ex.ano` (preferred — the year selector already re-renders programmatically), or show an inline warning "Exercício de 2024 recalculado com a tabela de 2025" and disable "Atualizar" until the years match.
-2. Extend `migrateExercicio` to type-check known numeric fields (finite, ≥ 0), returning the existing structured `ParseResult` error on failure — rendered per SPEC-007's invalid-row pattern.
-3. Add `state/types.test.ts` covering `migrateExercicio` (valid, wrong types, negative, unknown schema version), `slugify` collisions, and `buildSnapshot`; include `src/state/**` in coverage.
+1. No carregamento, se `ex.ano !== ano selecionado`: mudar o ano da app para `ex.ano` (preferido — o seletor de ano já re-renderiza programaticamente), ou mostrar um aviso inline "Exercício de 2024 recalculado com a tabela de 2025" e desativar "Atualizar" até os anos coincidirem.
+2. Estender `migrateExercicio` para verificar tipos dos campos numéricos conhecidos (finitos, ≥ 0), devolvendo o erro estruturado `ParseResult` existente — renderizado segundo o padrão de linha inválida da SPEC-007.
+3. Adicionar `state/types.test.ts` cobrindo `migrateExercicio` (válido, tipos errados, negativos, versão de schema desconhecida), colisões de `slugify`, e `buildSnapshot`; incluir `src/state/**` na cobertura.
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Loading an old-year exercício never silently changes its result or its stored year.
-- [ ] A file with `"rendimentoTrabalho": "13k"` is rejected with a clear reason, not zeroed.
-- [ ] `npm run test:run` exercises the state layer.
+- [ ] Carregar um exercício de outro ano nunca altera silenciosamente o resultado nem o ano guardado.
+- [ ] Um ficheiro com `"rendimentoTrabalho": "13k"` é rejeitado com motivo claro, não zerado.
+- [ ] `npm run test:run` exercita a camada de estado.
 
-## Touched areas
+## Áreas afetadas
 
 `src/ui/components/ExerciciosPanel.ts`, `src/state/types.ts`, `src/main.ts`, `vite.config.ts`

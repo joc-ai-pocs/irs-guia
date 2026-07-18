@@ -1,29 +1,29 @@
-# SPEC-022 — Content refresh & microcopy pass: coverage matrix, audience framing, jargon
+# SPEC-022 — Refresh de conteúdo e microcopy: matriz de cobertura, enquadramento, jargão
 
-- **Priority**: P2 · **Effort**: S · **Origin**: Product Owner, UX Designer · **Status**: Proposed
+- **Prioridade**: P2 · **Esforço**: S · **Origem**: Product Owner, UX Designer · **Estado**: Proposto
 
-## Problem
+## Problema
 
-The guide content has drifted from the product on three axes:
+O conteúdo do guia divergiu do produto em três eixos:
 
-1. **Stale coverage claims.** Secção 08 is titled "O que esta calculadora não cobre" yet its callouts describe cat. F, Anexo D and tributação conjunta — all of which the engine now covers. It under-sells the product and confuses readers about what to rely on. (The dependents error in `seccao08_callout_conjunta.md` is handled by SPEC-001.)
-2. **Owner framing.** `tab_calculadora_intro.md` opens with "Os teus 4 IRS deste ano…" — second-person owner framing meaningless to any other reader. Same leak in `resumo05.md` (SPEC-017) and the Resumo tab hardcoding year references while the YearSelector promises year-filtered content (`TabResumo.ts` takes no config; "ESCALÕES 2025", `resumo06.md` deadlines).
-3. **AT jargon and false affordances.** `AnexosHeader.ts` badges read "Conforme aplicável" / "Fora do âmbito" — administrative register a taxpayer won't parse; the locked "Rosto" `<div>` still gets the hover background, signalling clickability it doesn't have; BracketBar's nine equal-width segments visually imply equal bracket spans (the caption admits otherwise in 11px mono).
+1. **Afirmações de cobertura obsoletas.** A Secção 08 intitula-se "O que esta calculadora não cobre" mas os callouts descrevem cat. F, Anexo D e tributação conjunta — tudo coisas que o motor agora cobre. Subvende o produto e confunde o leitor sobre em que pode confiar. (O erro sobre dependentes em `seccao08_callout_conjunta.md` é tratado na SPEC-001.)
+2. **Enquadramento do autor.** `tab_calculadora_intro.md` abre com "Os teus 4 IRS deste ano…" — enquadramento pessoal do autor sem significado para qualquer outro leitor. A mesma fuga em `resumo05.md` (SPEC-017) e no tab Resumo, que hardcoda referências de ano enquanto o YearSelector promete conteúdo filtrado por ano (`TabResumo.ts` não recebe config; "ESCALÕES 2025", prazos em `resumo06.md`).
+3. **Jargão da AT e falsas affordances.** Os badges do `AnexosHeader.ts` dizem "Conforme aplicável" / "Fora do âmbito" — registo administrativo que um contribuinte não descodifica; o cartão "Rosto" bloqueado é um `<div>` que ainda recebe o fundo de hover, sinalizando clicabilidade que não tem; os nove segmentos de largura igual da BracketBar sugerem visualmente escalões de amplitude igual (a legenda admite o contrário em mono de 11px).
 
-## Requirements
+## Requisitos
 
-1. Rewrite Secção 08 as a coverage matrix derived from actual capability ("Coberto: A/H/F/D, conjunta, mínimo de existência · Não coberto: dependentes, Anexo B/E/G/J, IRS Jovem") — ideally generated from a single source of truth (a capabilities constant next to the engine) so it cannot drift again.
-2. Audience pass over `src/content/`: remove owner-specific phrasing; neutral second person throughout.
-3. Pass `config` into `TabResumo(config)`; interpolate `config.ano`/`anoDeclaracao` into card titles; template year-specific values from `tax-data` or stamp cards "Referente a rendimentos de YYYY" when they don't follow the selector.
-4. Rewrite AnexosHeader badges in second person ("Preenche sempre" / "Só se tiveres" / "Ainda não coberto"); scope hover styles to `--toggleable` chips; drop redundant `title` attributes.
-5. BracketBar: width proportional to bracket span with a min-width floor (keep equal widths only in the table), or an explicit visual break marker for the open-ended top bracket.
+1. Reescrever a Secção 08 como matriz de cobertura derivada da capacidade real ("Coberto: A/H/F/D, conjunta, mínimo de existência · Não coberto: dependentes, Anexo B/E/G/J, IRS Jovem") — idealmente gerada de uma única fonte de verdade (uma constante de capacidades junto ao motor) para não voltar a divergir.
+2. Passagem de audiência sobre `src/content/`: remover formulações específicas do autor; segunda pessoa neutra em todo o lado.
+3. Passar `config` a `TabResumo(config)`; interpolar `config.ano`/`anoDeclaracao` nos títulos dos cartões; templatizar valores específicos do ano a partir de `tax-data` ou estampar os cartões com "Referente a rendimentos de AAAA" quando não seguem o seletor.
+4. Reescrever os badges do AnexosHeader em segunda pessoa ("Preenche sempre" / "Só se tiveres" / "Ainda não coberto"); limitar os estilos de hover aos chips `--toggleable`; remover os `title` redundantes.
+5. BracketBar: largura proporcional à amplitude do escalão com um mínimo de largura (manter larguras iguais só na tabela), ou um marcador visual de quebra explícito para o último escalão aberto.
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Secção 08's claims match the engine's actual coverage, verified against `engine/index.ts` exports.
-- [ ] Selecting 2024 leaves no visible "2025" claim that doesn't declare itself.
-- [ ] No first-person-owner copy remains in `src/content/`.
+- [ ] As afirmações da Secção 08 correspondem à cobertura real do motor, verificadas contra os exports de `engine/index.ts`.
+- [ ] Selecionar 2024 não deixa nenhum "2025" visível que não se declare como tal.
+- [ ] Não resta copy na primeira pessoa do autor em `src/content/`.
 
-## Touched areas
+## Áreas afetadas
 
 `src/content/*.md`, `src/ui/sections/TabResumo.ts`, `Seccao08_Avisos.ts`, `src/ui/components/AnexosHeader.ts/.css`, `BracketBar.ts/.css`

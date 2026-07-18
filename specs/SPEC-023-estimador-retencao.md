@@ -1,25 +1,25 @@
-# SPEC-023 — Withholding estimator: from monthly salary to projected refund
+# SPEC-023 — Estimador de retenção: do salário mensal ao reembolso previsto
 
-- **Priority**: P2 · **Effort**: L · **Origin**: Product Owner · **Status**: Proposed
+- **Prioridade**: P2 · **Esforço**: L · **Origem**: Product Owner · **Estado**: Proposto
 
-## Problem
+## Problema
 
-`retencaoFonte` is a manually typed annual total. That works in April, when the DMR total is known — but for the other ten months the tool cannot answer the question people actually ask: "que reembolso vou ter?", because users don't know their projected annual withholding. The guide links CGD's "escalões vs tabelas de retenção" article, acknowledging the concept without supporting it. Solving this extends the product's usefulness from a 3-month season to year-round.
+`retencaoFonte` é um total anual escrito à mão. Funciona em abril, quando o total da DMR é conhecido — mas nos outros dez meses a ferramenta não consegue responder à pergunta que as pessoas realmente fazem: "que reembolso vou ter?", porque os utilizadores não sabem a sua retenção anual projetada. O guia liga o artigo da CGD "escalões vs tabelas de retenção", reconhecendo o conceito sem o suportar. Resolver isto estende a utilidade do produto de uma época de 3 meses para o ano inteiro.
 
-## Requirements
+## Requisitos
 
-1. Add per-year retention tables to `tax-data/` (published AT tables; they fit the existing per-year config + `fontes` pattern). Scope initially to trabalho dependente, continente, the main situações (não casado / casado único titular / casado dois titulares, with/without dependents).
-2. New engine module `retencao.ts`: monthly gross + situação → monthly withholding → ×14 annual estimate (subsídios handling documented).
-3. Calculator: optional "modo mensal" — salário mensal bruto + situação — producing an estimated annual withholding that pre-fills `retencaoFonte` (editable override always wins).
-4. Pedagogical callout: retention is an advance, not the tax — linking the estimate to the final apuramento the app already computes.
-5. Accept the maintenance cost consciously: retention tables change more often than brackets (document this in the spec header of each year file).
+1. Adicionar tabelas de retenção por ano a `tax-data/` (tabelas publicadas pela AT; encaixam no padrão existente de config por ano + `fontes`). Âmbito inicial: trabalho dependente, continente, as situações principais (não casado / casado único titular / casado dois titulares, com/sem dependentes).
+2. Novo módulo do motor `retencao.ts`: bruto mensal + situação → retenção mensal → ×14 estimativa anual (tratamento dos subsídios documentado).
+3. Calculadora: "modo mensal" opcional — salário mensal bruto + situação — que produz uma retenção anual estimada a pré-preencher `retencaoFonte` (o override manual ganha sempre).
+4. Callout pedagógico: a retenção é um adiantamento, não o imposto — ligando a estimativa ao apuramento final que a app já calcula.
+5. Aceitar conscientemente o custo de manutenção: as tabelas de retenção mudam mais vezes do que os escalões (documentar no cabeçalho de cada ficheiro de ano).
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Entering €1 500/month, não casado, 0 dependentes yields a plausible annual retention matching the published AT table for that year.
-- [ ] The refund estimate updates accordingly, and the manual annual field still overrides.
-- [ ] All table values live in `tax-data/` with official sources.
+- [ ] Introduzir 1 500 €/mês, não casado, 0 dependentes produz uma retenção anual plausível, coerente com a tabela publicada da AT para esse ano.
+- [ ] A estimativa de reembolso atualiza em conformidade, e o campo anual manual continua a prevalecer.
+- [ ] Todos os valores das tabelas vivem em `tax-data/` com fontes oficiais.
 
-## Touched areas
+## Áreas afetadas
 
-`src/tax-data/types.ts`, `src/tax-data/*.ts`, new `src/engine/retencao.ts`, `src/ui/components/Calculator.ts`
+`src/tax-data/types.ts`, `src/tax-data/*.ts`, novo `src/engine/retencao.ts`, `src/ui/components/Calculator.ts`

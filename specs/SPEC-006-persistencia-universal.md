@@ -1,30 +1,30 @@
-# SPEC-006 — Universal persistence: fallback storage + JSON export/import
+# SPEC-006 — Persistência universal: storage de fallback + exportar/importar JSON
 
-- **Priority**: P0 · **Effort**: M · **Origin**: Software Architect, Product Owner, Marketing · **Status**: Proposed
+- **Prioridade**: P0 · **Esforço**: M · **Origem**: Arquiteto de Software, Product Owner, Marketing · **Estado**: Proposto
 
-## Problem
+## Problema
 
-The entire save/load feature depends on the File System Access API, which is Chromium-only. `fs-storage.ts` (`isFsAccessSupported`) and `ExerciciosPanel.ts` handle the unsupported case by telling the user "Usa Chrome, Edge, Brave ou Arc" — on Firefox, Safari, and all of iOS there is no way to persist an exercício at all. For the household goal (4 declarations, family members' machines) this is a hard availability gap; for any public release it excludes roughly half of visitors, most of them mobile. The genuine privacy differentiator — data never leaves the browser — is never stated in the UI.
+Toda a funcionalidade de guardar/carregar depende da File System Access API, exclusiva de browsers Chromium. `fs-storage.ts` (`isFsAccessSupported`) e `ExerciciosPanel.ts` tratam o caso não suportado dizendo ao utilizador "Usa Chrome, Edge, Brave ou Arc" — em Firefox, Safari e todo o iOS não há forma nenhuma de persistir um exercício. Para o objetivo doméstico (4 declarações, máquinas de vários membros da família) é uma falha dura de disponibilidade; para qualquer publicação exclui cerca de metade dos visitantes, a maioria em mobile. O verdadeiro diferenciador de privacidade — os dados nunca saem do browser — nunca é afirmado na UI.
 
-## Proposed solution
+## Solução proposta
 
-Extract the storage contract into an interface with a universal fallback adapter, plus explicit export/import that works everywhere and doubles as backup.
+Extrair o contrato de storage para uma interface com um adaptador de fallback universal, mais exportar/importar explícitos que funcionam em todo o lado e servem de backup.
 
-## Requirements
+## Requisitos
 
-1. Define a `ExercicioStorage` interface from the current `fs-storage.ts` surface (`list`, `save`, `load`, `delete`); keep the FSA implementation as the enhanced path.
-2. Add an IndexedDB (or localStorage) adapter selected automatically when FSA is unavailable; `ExerciciosPanel` works identically over either.
-3. Add "Exportar JSON" (Blob + `<a download>`) and "Importar JSON" (`<input type="file">`) actions available in ALL browsers, reusing `migrateExercicio` for validation on import.
-4. Replace the dead-end unsupported message with the fallback experience; mention FSA-connected folders as the power-user option.
-5. Surface the privacy note where saving happens: "Os ficheiros ficam apenas no teu computador — nada é enviado."
+1. Definir uma interface `ExercicioStorage` a partir da superfície atual de `fs-storage.ts` (`list`, `save`, `load`, `delete`); manter a implementação FSA como caminho avançado.
+2. Adicionar um adaptador IndexedDB (ou localStorage) selecionado automaticamente quando a FSA não está disponível; o `ExerciciosPanel` funciona de forma idêntica sobre qualquer um.
+3. Adicionar ações "Exportar JSON" (Blob + `<a download>`) e "Importar JSON" (`<input type="file">`) disponíveis em TODOS os browsers, reutilizando `migrateExercicio` para validação na importação.
+4. Substituir a mensagem-beco-sem-saída de browser não suportado pela experiência de fallback; mencionar as pastas ligadas por FSA como opção para utilizadores avançados.
+5. Mostrar a nota de privacidade onde se guarda: "Os ficheiros ficam apenas no teu computador — nada é enviado."
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] In Firefox/Safari: save, list, load, delete, export, and import all work.
-- [ ] In Chromium: existing FSA folder flow unchanged; export/import also available.
-- [ ] An exported file re-imports losslessly (`migrateExercicio` round-trip).
-- [ ] No new runtime dependencies.
+- [ ] Em Firefox/Safari: guardar, listar, carregar, apagar, exportar e importar funcionam todos.
+- [ ] Em Chromium: o fluxo de pasta FSA existente mantém-se; exportar/importar também disponíveis.
+- [ ] Um ficheiro exportado reimporta sem perdas (round-trip por `migrateExercicio`).
+- [ ] Sem novas dependências de runtime.
 
-## Touched areas
+## Áreas afetadas
 
-`src/state/fs-storage.ts`, `src/state/` (new adapter), `src/state/types.ts`, `src/ui/components/ExerciciosPanel.ts`
+`src/state/fs-storage.ts`, `src/state/` (novo adaptador), `src/state/types.ts`, `src/ui/components/ExerciciosPanel.ts`

@@ -1,34 +1,34 @@
-# SPEC-002 — Two-declarant joint taxation + conjunta vs. separada comparator
+# SPEC-002 — Tributação conjunta com dois declarantes + comparador conjunta vs. separada
 
-- **Priority**: P0 · **Effort**: L · **Origin**: Product Owner, UX Designer · **Status**: Proposed
+- **Prioridade**: P0 · **Esforço**: L · **Origem**: Product Owner, UX Designer · **Estado**: Proposto
 
-## Problem
+## Problema
 
-Joint taxation is simulated with a single `quocienteFamiliar` number input (`step: 0.5`, which allows the legally meaningless 1.5) and ONE set of cat. A fields. For a two-earner couple the engine computes one combined specific deduction — `min(total, max(4 462,15, combined contributions))` — when the law grants each sujeito passivo their own. A couple each earning ~€20k loses ~€4 462 of deduction in the simulation.
+A tributação conjunta é simulada com um único input numérico `quocienteFamiliar` (`step: 0.5`, que permite o juridicamente absurdo 1,5) e UM só conjunto de campos de cat. A. Para um casal com dois rendimentos, o motor calcula uma única dedução específica combinada — `min(total, max(4 462,15, contribuições combinadas))` — quando a lei confere a cada sujeito passivo a sua própria dedução. Um casal em que cada um ganha ~20 000 € perde ~4 462 € de dedução na simulação.
 
-The single most valuable married-couple decision — tributação conjunta vs. separada — cannot be computed at all, even though the engine already demonstrates the what-if pattern with `englobamentoNota` for cat. F.
+A decisão mais valiosa para um casal — tributação conjunta vs. separada — não pode sequer ser calculada, apesar de o motor já demonstrar o padrão de "what-if" com a `englobamentoNota` da cat. F.
 
-The form UX compounds it: the first field of the whole form asks for an engine constant ("quociente familiar, 1 ou 2") instead of a question a taxpayer understands.
+A UX do formulário agrava o problema: o primeiro campo de todo o formulário pede uma constante interna do motor ("quociente familiar, 1 ou 2") em vez de uma pergunta que um contribuinte entende.
 
-## Proposed solution
+## Solução proposta
 
-Model Sujeito Passivo A and B separately; compute per-SP specific deductions; add a joint-vs-separate comparator; replace the quotient spinner with a segmented control.
+Modelar os Sujeitos Passivos A e B separadamente; calcular deduções específicas por SP; adicionar um comparador conjunta vs. separada; substituir o spinner do quociente por um controlo segmentado.
 
-## Requirements
+## Requisitos
 
-1. Replace the `quocienteFamiliar` number input with a two-option segmented control styled like `YearSelector`: "Tributação individual" / "Tributação conjunta (casal)", mapped internally to 1/2. Keep the pedagogy in the hint ("isto é o quociente familiar do quadro 5 do Rosto").
-2. When conjunta is selected, show Sujeito Passivo A / B input blocks, each with its own cat. A/H income + contributions.
-3. Engine: compute the specific deduction per sujeito passivo, then sum, per art. 25.º CIRS.
-4. Add a "Conjunta vs. separada" comparator note that runs both scenarios and shows the € delta, mirroring the `englobamentoNota` pattern in `liquidacao.ts`.
-5. `Exercicio` snapshots capture both SP blocks (schema bump; see SPEC-011 for `migrateExercicio` coordination).
+1. Substituir o input numérico `quocienteFamiliar` por um controlo segmentado de duas opções ao estilo do `YearSelector`: "Tributação individual" / "Tributação conjunta (casal)", mapeado internamente para 1/2. Manter a pedagogia na hint ("isto é o quociente familiar do quadro 5 do Rosto").
+2. Com conjunta selecionada, mostrar blocos de input Sujeito Passivo A / B, cada um com rendimento cat. A/H e contribuições próprias.
+3. Motor: calcular a dedução específica por sujeito passivo e somar, nos termos do art. 25.º CIRS.
+4. Adicionar uma nota comparadora "Conjunta vs. separada" que corre os dois cenários e mostra o delta em €, espelhando o padrão `englobamentoNota` em `liquidacao.ts`.
+5. Os snapshots de `Exercicio` capturam os dois blocos de SP (bump de schema; coordenar com a SPEC-011 para o `migrateExercicio`).
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] A two-earner couple gets two specific deductions, not one.
-- [ ] Entering 1.5 as a quotient is impossible via the UI.
-- [ ] The comparator states which option is cheaper and by how much, in € (formatEUR).
-- [ ] Engine tests cover: both SPs above the deduction floor, one below, and equivalence of individual mode with today's results (no regression).
+- [ ] Um casal com dois rendimentos obtém duas deduções específicas, não uma.
+- [ ] Introduzir 1,5 como quociente é impossível através da UI.
+- [ ] O comparador indica qual a opção mais barata e por quanto, em € (formatEUR).
+- [ ] Testes do motor cobrem: ambos os SP acima do piso da dedução, um abaixo, e equivalência do modo individual com os resultados atuais (sem regressão).
 
-## Touched areas
+## Áreas afetadas
 
 `src/engine/liquidacao.ts`, `src/engine/escaloes.ts`, `src/ui/components/Calculator.ts`, `src/state/types.ts`

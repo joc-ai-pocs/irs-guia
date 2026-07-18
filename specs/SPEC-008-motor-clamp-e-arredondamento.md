@@ -1,32 +1,32 @@
-# SPEC-008 — Engine correctness: coleta líquida floor + cent-rounding policy
+# SPEC-008 — Correção do motor: piso da coleta líquida + política de arredondamento aos cêntimos
 
-- **Priority**: P0 · **Effort**: S · **Origin**: Software Architect · **Status**: Proposed
+- **Prioridade**: P0 · **Esforço**: S · **Origem**: Arquiteto de Software · **Estado**: Proposto
 
-## Problem
+## Problema
 
-Two engine-level correctness gaps that produce wrong euro figures:
+Duas lacunas de correção ao nível do motor que produzem valores em euros errados:
 
-1. **Negative coleta líquida.** `liquidacao.ts:384`: `coletaLiquida = coletaTotal - deducoesColeta - beneficioMunicipal` is not clamped at zero (unlike `baseBeneficioMunicipal`, which is). Under art. 78.º CIRS, deductions cannot exceed the collection. A low income (coleta ~€300) with €1 500 of health/education deductions — a plausible pensioner scenario — yields a negative coleta líquida flowing into a fictitious "a receber" amount. No test covers deduções > coleta.
-2. **No rounding policy.** The engine carries raw IEEE floats end to end; `exercises/exercicio-2025-mae.json` shows `"coletaTotal": 1092.7476000000001` persisted on disk. The AT note rounds specific lines to cents. `formatEUR` hides the noise in the UI, but the `casos` reconciliation harness (tolerance €0.01) is one accumulated half-cent from flaky, and future snapshot-vs-recompute comparisons will hit spurious diffs.
+1. **Coleta líquida negativa.** `liquidacao.ts:384`: `coletaLiquida = coletaTotal - deducoesColeta - beneficioMunicipal` não é limitada a zero (ao contrário de `baseBeneficioMunicipal`, que é). Nos termos do art. 78.º CIRS, as deduções não podem exceder a coleta. Um rendimento baixo (coleta ~300 €) com 1 500 € de deduções de saúde/educação — cenário plausível de pensionista — produz uma coleta líquida negativa que alimenta um valor "a receber" fictício. Nenhum teste cobre deduções > coleta.
+2. **Sem política de arredondamento.** O motor transporta floats IEEE crus de ponta a ponta; `exercises/exercicio-2025-mae.json` mostra `"coletaTotal": 1092.7476000000001` persistido em disco. A nota da AT arredonda linhas específicas aos cêntimos. O `formatEUR` esconde o ruído na UI, mas o harness de reconciliação `casos` (tolerância 0,01 €) está a meio cêntimo acumulado de ficar instável, e futuras comparações snapshot-vs-recalculado terão diffs espúrios.
 
-## Proposed solution
+## Solução proposta
 
-Clamp at the legal floor with an explanatory note, and round at the documented settlement-note lines via a single helper.
+Limitar ao piso legal com uma nota explicativa, e arredondar nas linhas documentadas da nota de liquidação através de um único helper.
 
-## Requirements
+## Requisitos
 
-1. `coletaLiquida = Math.max(0, …)`; when the clamp fires, emit a detail note (pattern exists: `abatimentoMinimoExistenciaDetalhe`) explaining that deductions à coleta cannot generate a refund by themselves (IRC/IRS retention refunds come from retenção, not negative coleta).
-2. Introduce `roundCents()` in the engine; apply at the settlement-note lines: coleta, coleta total, coleta líquida, imposto apurado.
-3. Apply the same rounding in `buildSnapshot` (`src/state/types.ts`) so persisted files carry clean cents.
-4. Add a caso to `casos/cobertura.json` pinning the deduções > coleta behaviour; run `npm run casos` to confirm no regression on existing casos.
-5. Document the rounding policy in a comment on `roundCents()` (which lines round, which stay raw).
+1. `coletaLiquida = Math.max(0, …)`; quando o limite atua, emitir uma nota de detalhe (padrão existente: `abatimentoMinimoExistenciaDetalhe`) explicando que as deduções à coleta não podem, por si só, gerar reembolso (os reembolsos vêm da retenção, não de coleta negativa).
+2. Introduzir `roundCents()` no motor; aplicar nas linhas da nota de liquidação: coleta, coleta total, coleta líquida, imposto apurado.
+3. Aplicar o mesmo arredondamento em `buildSnapshot` (`src/state/types.ts`) para que os ficheiros persistidos tenham cêntimos limpos.
+4. Adicionar um caso a `casos/cobertura.json` fixando o comportamento deduções > coleta; correr `npm run casos` para confirmar ausência de regressões nos casos existentes.
+5. Documentar a política de arredondamento em comentário no `roundCents()` (que linhas arredondam, quais ficam cruas).
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Coleta €300 + deduções €1 500 → coleta líquida €0, with a visible note; "a receber" reflects only retention.
-- [ ] No persisted snapshot contains more than 2 decimal places at the rounded lines.
-- [ ] All existing tests and casos pass unchanged (within the €0.01 tolerance).
+- [ ] Coleta 300 € + deduções 1 500 € → coleta líquida 0 €, com nota visível; "a receber" reflete apenas a retenção.
+- [ ] Nenhum snapshot persistido contém mais de 2 casas decimais nas linhas arredondadas.
+- [ ] Todos os testes e casos existentes passam sem alterações (dentro da tolerância de 0,01 €).
 
-## Touched areas
+## Áreas afetadas
 
 `src/engine/liquidacao.ts`, `src/state/types.ts`, `casos/cobertura.json`

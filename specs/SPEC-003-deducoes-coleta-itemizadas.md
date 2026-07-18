@@ -1,30 +1,30 @@
-# SPEC-003 — Itemized deduções à coleta (consume the table that already exists)
+# SPEC-003 — Deduções à coleta itemizadas (consumir a tabela que já existe)
 
-- **Priority**: P0 · **Effort**: M · **Origin**: Product Owner · **Status**: Proposed
+- **Prioridade**: P0 · **Esforço**: M · **Origem**: Product Owner · **Estado**: Proposto
 
-## Problem
+## Problema
 
-`TaxYearConfig.deducoesColeta` is a fully sourced table (saúde 15%/€1 000, educação 30%/€800, gerais 35%/€250, rendas, PPR tiers — each with a `fonteId`), yet no engine or UI code consumes it. The Calculator collapses everything into one lump-sum euro field ("Saúde, educação, e-fatura — apuradas pela AT"). At IRS time users have e-fatura category totals, not the final credit — they cannot produce that lump sum themselves. The global sliding cap (art. 78.º n.º 7 CIRS) is also unmodelled, so even a correct lump sum can overstate deductions at higher incomes.
+`TaxYearConfig.deducoesColeta` é uma tabela completa e com fontes (saúde 15%/1 000 €, educação 30%/800 €, gerais 35%/250 €, rendas, escalões de PPR — cada um com `fonteId`), mas nenhum código do motor ou da UI a consome. A Calculadora colapsa tudo num único campo de valor global ("Saúde, educação, e-fatura — apuradas pela AT"). Na época do IRS, os utilizadores têm os totais por categoria do e-fatura, não o crédito final — não conseguem produzir esse valor global sozinhos. O teto global degressivo (art. 78.º n.º 7 CIRS) também não está modelado, pelo que mesmo um valor global correto pode sobrestimar as deduções em rendimentos mais altos.
 
-## Proposed solution
+## Solução proposta
 
-An engine function that turns per-category expenses into the legal credit, plus itemized inputs, keeping the lump sum as an advanced override.
+Uma função do motor que transforma despesas por categoria no crédito legal, mais inputs itemizados, mantendo o valor global como override avançado.
 
-## Requirements
+## Requisitos
 
-1. New engine function `calcularDeducoesColeta(despesas, config)` applying each category's percentage + ceiling from the existing `deducoesColeta` table.
-2. Implement the global sliding cap of art. 78.º n.º 7 (income-dependent ceiling on total deductions), with its constants added to `TaxYearConfig` + `fontes`.
-3. Calculator: replace the single field with per-category inputs (saúde, educação, rendas, despesas gerais, PPR), grouped with progressive disclosure; keep "Valor apurado pela AT (avançado)" as an override that bypasses the itemized calculation.
-4. Render the per-category breakdown (spent → rate → cap → credit) with the expandable `FormulaBlock` pattern already used for the specific deduction.
-5. Dependent deductions (SPEC-001) flow through the same step and the same global cap.
+1. Nova função do motor `calcularDeducoesColeta(despesas, config)` que aplica a percentagem + teto de cada categoria a partir da tabela `deducoesColeta` existente.
+2. Implementar o teto global degressivo do art. 78.º n.º 7 (limite dependente do rendimento sobre o total das deduções), com as suas constantes adicionadas a `TaxYearConfig` + `fontes`.
+3. Calculadora: substituir o campo único por inputs por categoria (saúde, educação, rendas, despesas gerais, PPR), agrupados com progressive disclosure; manter "Valor apurado pela AT (avançado)" como override que ignora o cálculo itemizado.
+4. Apresentar a decomposição por categoria (despesa → taxa → teto → crédito) com o padrão expansível `FormulaBlock` já usado na dedução específica.
+5. As deduções por dependente (SPEC-001) passam pelo mesmo passo e pelo mesmo teto global.
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Entering €2 000 saúde yields a €300 credit (15%, under the €1 000 cap) visibly derived in the UI.
-- [ ] A high-income scenario shows the global cap binding, with a note explaining it.
-- [ ] The lump-sum override reproduces today's behaviour exactly.
-- [ ] All rates/caps come from `tax-data/` (no constants in engine/UI); tests cover each category cap and the global cap.
+- [ ] Introduzir 2 000 € de saúde produz um crédito de 300 € (15%, abaixo do teto de 1 000 €), com derivação visível na UI.
+- [ ] Um cenário de rendimento alto mostra o teto global a atuar, com nota explicativa.
+- [ ] O override de valor global reproduz exatamente o comportamento atual.
+- [ ] Todas as taxas/tetos vêm de `tax-data/` (sem constantes no motor/UI); testes cobrem cada teto por categoria e o teto global.
 
-## Touched areas
+## Áreas afetadas
 
-`src/engine/` (new module), `src/tax-data/types.ts`, `src/tax-data/*.ts`, `src/ui/components/Calculator.ts`, `src/ui/components/FormulaBlock.ts`
+`src/engine/` (novo módulo), `src/tax-data/types.ts`, `src/tax-data/*.ts`, `src/ui/components/Calculator.ts`, `src/ui/components/FormulaBlock.ts`

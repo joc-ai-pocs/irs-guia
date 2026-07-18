@@ -1,30 +1,30 @@
 # SPEC-012 — Cat. B regime simplificado (Anexo B — recibos verdes)
 
-- **Priority**: P1 · **Effort**: L · **Origin**: Product Owner, Marketing · **Status**: Proposed
+- **Prioridade**: P1 · **Esforço**: L · **Origem**: Product Owner, Marketing · **Estado**: Proposto
 
-## Problem
+## Problema
 
-Coverage is cat. A/H/F plus cat. B only via Anexo D transparência fiscal — a niche. Generic cat. B under the regime simplificado (Anexo B, art. 31.º CIRS coefficients: 0.75 services, 0.35 alojamento local, etc.) — Portugal's enormous freelancer/recibos-verdes population, the largest underserved and highest-search-volume segment — is explicitly not modelled (`liquidacao.ts` docstring). A freelancer opening the Calculator reads "not for me" within seconds. Notably, `2025.ts` already carries a `fontes.art31` entry, signalling intent.
+A cobertura é cat. A/H/F mais cat. B apenas via Anexo D transparência fiscal — um nicho. A cat. B genérica em regime simplificado (Anexo B, coeficientes do art. 31.º CIRS: 0,75 serviços, 0,35 alojamento local, etc.) — a enorme população de freelancers/recibos verdes, o maior segmento por servir e com maior volume de pesquisa — está explicitamente por modelar (docstring de `liquidacao.ts`). Um freelancer que abra a Calculadora lê "isto não é para mim" em segundos. Nota: `2025.ts` já tem uma entrada `fontes.art31`, sinalizando a intenção.
 
-## Proposed solution
+## Solução proposta
 
-Follow the extension pattern cat. F established: coefficients in `TaxYearConfig`, a dedicated engine module, an AnexosHeader card, and a Calculator group — plus a pedagogical section ("porque é que só 75% conta?").
+Seguir o padrão de extensão que a cat. F estabeleceu: coeficientes em `TaxYearConfig`, módulo próprio do motor, cartão no AnexosHeader e grupo na Calculadora — mais uma secção pedagógica ("porque é que só 75% conta?").
 
-## Requirements
+## Requisitos
 
-1. `TaxYearConfig`: art. 31.º coefficient table (activity type → coefficient) with `fontes` entries, per year.
-2. New engine module `categoriaB.ts`: gross × coefficient → englobed net, including the deduction-of-contributions adjustment (art. 31.º n.º 2 — SS contributions exceeding 10% of gross, where applicable) and the mandatory-minimum rules kept in scope notes if deferred.
-3. `calcularLiquidacao` englobes the cat. B net alongside A/H/F; output detail shows the coefficient math.
-4. UI: new AnexosHeader card "Anexo B · Trabalho independente"; Calculator group with activity-type select + gross income + contributions.
-5. Guide: short section or callout explaining the coefficient logic, cross-linked from the Calculator hint.
-6. Out of scope (explicit): contabilidade organizada (Anexo C), IVA interactions, retention on recibos verdes (see SPEC-023).
+1. `TaxYearConfig`: tabela de coeficientes do art. 31.º (tipo de atividade → coeficiente) com entradas em `fontes`, por ano.
+2. Novo módulo do motor `categoriaB.ts`: bruto × coeficiente → líquido englobado, incluindo o ajuste de dedução de contribuições (art. 31.º n.º 2 — contribuições SS que excedam 10% do bruto, quando aplicável); regras de mínimos obrigatórios anotadas no âmbito se adiadas.
+3. `calcularLiquidacao` engloba o líquido de cat. B a par de A/H/F; o detalhe do output mostra a conta do coeficiente.
+4. UI: novo cartão AnexosHeader "Anexo B · Trabalho independente"; grupo na Calculadora com select de tipo de atividade + rendimento bruto + contribuições.
+5. Guia: secção curta ou callout a explicar a lógica dos coeficientes, com cross-link a partir da hint da Calculadora.
+6. Fora de âmbito (explícito): contabilidade organizada (Anexo C), interações com IVA, retenção nos recibos verdes (ver SPEC-023).
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] A €30 000 services freelancer sees €22 500 englobed (0.75) with the derivation visible.
-- [ ] All coefficients live in `tax-data/` with official sources.
-- [ ] Engine tests cover at least services, alojamento local, and the contributions adjustment; casos added when a real Anexo B note is available.
+- [ ] Um freelancer de serviços com 30 000 € vê 22 500 € englobados (0,75), com derivação visível.
+- [ ] Todos os coeficientes vivem em `tax-data/` com fontes oficiais.
+- [ ] Testes do motor cobrem pelo menos serviços, alojamento local e o ajuste de contribuições; casos adicionados quando houver uma nota real com Anexo B.
 
-## Touched areas
+## Áreas afetadas
 
-`src/engine/` (new `categoriaB.ts`), `src/engine/liquidacao.ts`, `src/tax-data/*.ts`, `src/ui/components/AnexosHeader.ts`, `src/ui/components/Calculator.ts`, `src/content/`
+`src/engine/` (novo `categoriaB.ts`), `src/engine/liquidacao.ts`, `src/tax-data/*.ts`, `src/ui/components/AnexosHeader.ts`, `src/ui/components/Calculator.ts`, `src/content/`

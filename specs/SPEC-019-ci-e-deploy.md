@@ -1,23 +1,23 @@
-# SPEC-019 — CI and deploy hygiene
+# SPEC-019 — Higiene de CI e deploy
 
-- **Priority**: P1 · **Effort**: S · **Origin**: Software Architect · **Status**: Proposed
+- **Prioridade**: P1 · **Esforço**: S · **Origem**: Arquiteto de Software · **Estado**: Proposto
 
-## Problem
+## Problema
 
-`.github/workflows/deploy-pages.yml` still deploys on pushes to `feat/year-filter`, marked "Temporary… until it is merged" — that branch merged long ago (the year selector is in `main.ts`). A stray push to the stale branch would overwrite the production site with old code. There is also no standalone CI: tests/typecheck run only inside the deploy job, so PRs (which the repo uses — see merge commits `1a82fb1`, `b8dc845`) get no checks before merge. Broken engine changes reaching `main` eventually become published wrong numbers.
+`.github/workflows/deploy-pages.yml` ainda faz deploy em pushes para `feat/year-filter`, marcado como "Temporary… until it is merged" — esse branch foi integrado há muito (o seletor de ano está em `main.ts`). Um push acidental para o branch obsoleto reescreveria o site de produção com código antigo. Também não existe CI autónoma: testes/typecheck só correm dentro do job de deploy, pelo que os PRs (que o repo usa — ver merges `1a82fb1`, `b8dc845`) não têm verificações antes do merge. Alterações partidas do motor que cheguem a `main` acabam por se tornar números errados publicados.
 
-## Requirements
+## Requisitos
 
-1. Remove the `feat/year-filter` trigger from `deploy-pages.yml`; deploy only from `main`.
-2. Add `ci.yml` running on `pull_request` (and pushes to `main`): `npm ci && npm run test:run && npm run typecheck`.
-3. Include `npm run casos` in CI — `scripts/casos.ts` already exits non-zero on failure, making the AT-note reconciliation a merge gate.
-4. Optional: make the deploy job depend on the same checks rather than duplicating them.
+1. Remover o trigger `feat/year-filter` de `deploy-pages.yml`; deploy apenas a partir de `main`.
+2. Adicionar `ci.yml` a correr em `pull_request` (e pushes para `main`): `npm ci && npm run test:run && npm run typecheck`.
+3. Incluir `npm run casos` na CI — `scripts/casos.ts` já sai com código diferente de zero em falha, tornando a reconciliação com notas da AT uma barreira de merge.
+4. Opcional: fazer o job de deploy depender das mesmas verificações em vez de as duplicar.
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Pushing to any branch other than `main` never deploys.
-- [ ] A PR with a failing engine test or caso shows a red check before merge.
+- [ ] Push para qualquer branch que não `main` nunca faz deploy.
+- [ ] Um PR com um teste do motor ou um caso a falhar mostra um check vermelho antes do merge.
 
-## Touched areas
+## Áreas afetadas
 
-`.github/workflows/deploy-pages.yml`, `.github/workflows/ci.yml` (new)
+`.github/workflows/deploy-pages.yml`, `.github/workflows/ci.yml` (novo)

@@ -1,30 +1,30 @@
-# SPEC-005 — pt-PT number inputs with real validation (no silent zeros)
+# SPEC-005 — Inputs numéricos pt-PT com validação a sério (sem zeros silenciosos)
 
-- **Priority**: P0 · **Effort**: M · **Origin**: UX Designer, Software Architect · **Status**: Proposed
+- **Prioridade**: P0 · **Esforço**: M · **Origem**: UX Designer, Arquiteto de Software · **Estado**: Proposto
 
-## Problem
+## Problema
 
-`Calculator.ts` uses raw `<input type="number">` with values like `13054.76`, while every output uses `formatEUR` ("13 054,76 €"). A Portuguese user who types `1.436,05` gets browser-dependent rejection or truncation. `getInputs()` then coerces anything non-finite to 0 — an empty or invalid field silently zeroes an income and the whole liquidação recomputes as if it vanished: no error state, no `aria-invalid`, no message. Negative amounts are accepted on every field except `quocienteFamiliar` (the only one with `min`/`max`).
+`Calculator.ts` usa `<input type="number">` cru com valores como `13054.76`, enquanto todo o output usa `formatEUR` ("13 054,76 €"). Um utilizador português que escreva `1.436,05` obtém rejeição ou truncagem dependente do browser. Depois, `getInputs()` coage qualquer valor não finito para 0 — um campo vazio ou inválido zera silenciosamente um rendimento e toda a liquidação é recalculada como se ele tivesse desaparecido: sem estado de erro, sem `aria-invalid`, sem mensagem. Valores negativos são aceites em todos os campos exceto `quocienteFamiliar` (o único com `min`/`max`).
 
-## Proposed solution
+## Solução proposta
 
-A pt-PT parse/format layer over text inputs, with visible per-field error states, and "last valid value" semantics instead of zero-coercion.
+Uma camada de parse/formatação pt-PT sobre inputs de texto, com estados de erro visíveis por campo, e semântica de "último valor válido" em vez de coerção para zero.
 
-## Requirements
+## Requisitos
 
-1. Switch money fields to `type="text"` + `inputmode="decimal"`; accept `,` as decimal separator and spaces/dots as thousands; format on blur via the pt-PT conventions already in `src/ui/format.ts`.
-2. Invalid input shows an inline error state: `.calculator__field--invalid` border + short message replacing the hint (e.g. "Insere um valor em euros, ex.: 1 436,05") + `aria-invalid="true"`.
-3. While a field is invalid, the computation keeps the last valid value — never silently collapses to 0.
-4. Enforce `min: 0` semantics on all money fields (negative values rejected with the error state).
-5. Extend `FieldSpec` in `Calculator.ts` with the constraints so bounds live in one place (also used by SPEC-010's file validation).
+1. Passar os campos monetários para `type="text"` + `inputmode="decimal"`; aceitar `,` como separador decimal e espaços/pontos como milhares; formatar no blur segundo as convenções pt-PT já em `src/ui/format.ts`.
+2. Input inválido mostra estado de erro inline: borda `.calculator__field--invalid` + mensagem curta a substituir a hint (ex.: "Insere um valor em euros, ex.: 1 436,05") + `aria-invalid="true"`.
+3. Enquanto um campo está inválido, o cálculo mantém o último valor válido — nunca colapsa silenciosamente para 0.
+4. Impor semântica `min: 0` em todos os campos monetários (valores negativos rejeitados com o estado de erro).
+5. Estender o `FieldSpec` em `Calculator.ts` com as restrições, para que os limites vivam num só sítio (também usado pela validação de ficheiros da SPEC-010).
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] Typing `1.436,05` yields 1436.05; blur re-renders it as "1 436,05".
-- [ ] Clearing a field mid-edit does not zero the result; an error/hint appears and the previous value holds.
-- [ ] Negative input shows the invalid state and does not enter the engine.
-- [ ] Screen readers announce invalid state (`aria-invalid` + message associated via `aria-describedby`).
+- [ ] Escrever `1.436,05` produz 1436.05; o blur re-renderiza como "1 436,05".
+- [ ] Limpar um campo a meio da edição não zera o resultado; aparece um erro/hint e o valor anterior mantém-se.
+- [ ] Input negativo mostra o estado inválido e não entra no motor.
+- [ ] Leitores de ecrã anunciam o estado inválido (`aria-invalid` + mensagem associada via `aria-describedby`).
 
-## Touched areas
+## Áreas afetadas
 
 `src/ui/components/Calculator.ts`, `src/ui/components/Calculator.css`, `src/ui/format.ts`

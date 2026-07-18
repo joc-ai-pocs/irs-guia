@@ -1,29 +1,29 @@
-# SPEC-011 — Household profiles + year-over-year roll-forward
+# SPEC-011 — Perfis do agregado + transporte ano-sobre-ano
 
-- **Priority**: P1 · **Effort**: M · **Origin**: Product Owner · **Status**: Proposed
+- **Prioridade**: P1 · **Esforço**: M · **Origem**: Product Owner · **Estado**: Proposto
 
-## Problem
+## Problema
 
-The stated product goal is a reusable yearly tool for the household's 4 declarations (BRIEFING.md), but `Exercicio` (schema v1) is a flat file with a free-form `nome` — person identity lives only in naming conventions like `exercicio-2025-mae.json`. There is no grouping by person, no "same person, previous year" link, no roll-forward. Every fiscal year all 4 declarations are re-typed from scratch, and "mãe 2024 vs mãe 2025" cannot be compared.
+O objetivo declarado do produto é uma ferramenta reutilizável todos os anos para as 4 declarações do agregado (BRIEFING.md), mas o `Exercicio` (schema v1) é um ficheiro plano com um `nome` livre — a identidade da pessoa vive apenas em convenções de nomes como `exercicio-2025-mae.json`. Não há agrupamento por pessoa, nem ligação "mesma pessoa, ano anterior", nem transporte. Cada ano fiscal, as 4 declarações são reescritas do zero, e "mãe 2024 vs mãe 2025" não pode ser comparado.
 
-## Proposed solution
+## Solução proposta
 
-Schema v2 with an optional `perfil` field, a grouped panel, and a one-click "Duplicar para {ano+1}" that recomputes under the new year and shows the delta.
+Schema v2 com campo opcional `perfil`, um painel agrupado, e um "Duplicar para {ano+1}" de um clique que recalcula com o novo ano e mostra o delta.
 
-## Requirements
+## Requisitos
 
-1. Bump `EXERCICIO_SCHEMA_VERSION` to 2: add optional `perfil: string`. `migrateExercicio` upgrades v1 files (perfil absent) — this is the migration hook's first real use.
-2. `ExerciciosPanel` groups the list by perfil (ungrouped section for files without one); the save flow (SPEC-007's inline form) gains an optional perfil field with datalist of known perfis.
-3. "Duplicar para {ano+1}" action: copies inputs, restamps `ano`, recomputes with the target year's config (must exist and, ideally, not be `provisorio` — warn per SPEC-014), saves as a new exercício.
-4. Year-over-year delta view when a perfil has exercícios in consecutive years: imposto apurado, escalão, taxa efetiva — computed from stored snapshots, displayed in the panel item meta.
-5. Coordinate schema changes with SPEC-002 (two-declarant inputs) to avoid two consecutive schema bumps.
+1. Subir `EXERCICIO_SCHEMA_VERSION` para 2: adicionar `perfil: string` opcional. `migrateExercicio` migra ficheiros v1 (perfil ausente) — o primeiro uso real do hook de migração.
+2. O `ExerciciosPanel` agrupa a lista por perfil (secção "sem perfil" para ficheiros sem ele); o fluxo de gravação (formulário inline da SPEC-007) ganha um campo perfil opcional com datalist dos perfis conhecidos.
+3. Ação "Duplicar para {ano+1}": copia os inputs, re-estampa o `ano`, recalcula com a config do ano de destino (tem de existir e, idealmente, não ser `provisorio` — avisar conforme a SPEC-016), guarda como novo exercício.
+4. Vista de delta ano-sobre-ano quando um perfil tem exercícios em anos consecutivos: imposto apurado, escalão, taxa efetiva — calculados a partir dos snapshots guardados, mostrados na meta do item do painel.
+5. Coordenar as alterações de schema com a SPEC-002 (inputs de dois declarantes) para evitar dois bumps consecutivos.
 
-## Acceptance criteria
+## Critérios de aceitação
 
-- [ ] v1 files load, display ungrouped, and re-save as v2 without data loss.
-- [ ] Duplicating "mãe 2025" to 2026 produces a saved 2026 exercício with identical inputs and recomputed results.
-- [ ] The panel shows a € and percentage-point delta between consecutive years of the same perfil.
+- [ ] Ficheiros v1 carregam, aparecem sem grupo, e regravam como v2 sem perda de dados.
+- [ ] Duplicar "mãe 2025" para 2026 produz um exercício de 2026 guardado com inputs idênticos e resultados recalculados.
+- [ ] O painel mostra delta em € e em pontos percentuais entre anos consecutivos do mesmo perfil.
 
-## Touched areas
+## Áreas afetadas
 
-`src/state/types.ts`, `src/ui/components/ExerciciosPanel.ts`, `src/engine/` (reuse only)
+`src/state/types.ts`, `src/ui/components/ExerciciosPanel.ts`, `src/engine/` (apenas reutilização)
