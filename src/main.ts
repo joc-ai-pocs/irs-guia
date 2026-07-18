@@ -21,7 +21,7 @@ import '@/styles/base.css';
 
 import type { TaxYearConfig } from '@/tax-data/types';
 import { TAX_YEARS, getTaxYearConfig, listTaxYearConfigs, requireFonte } from '@/tax-data';
-import { Hero, TabsNav, Footer, YearSelector } from '@/ui/components';
+import { Hero, TabsNav, Footer, YearSelector, ThemeToggle } from '@/ui/components';
 import { h, mount } from '@/ui/dom';
 import { TabGuia } from '@/ui/sections/TabGuia';
 import { TabResumo } from '@/ui/sections/TabResumo';
@@ -138,7 +138,9 @@ function App(config: TaxYearConfig, activeTab?: string): HTMLElement {
     secondary: `Tabela em vigor: ${config.diplomaLegal} · IAS ${config.ano}: ${formatEUR(config.ias)} · Documento pedagógico — não substitui o simulador oficial da AT.`,
   });
 
-  return h('div', { class: 'page' }, hero, yearSelector, tabs, footer);
+  const topbar = h('div', { class: 'page__topbar' }, ThemeToggle());
+
+  return h('div', { class: 'page' }, topbar, hero, yearSelector, tabs, footer);
 }
 
 const host = document.getElementById('app');

@@ -4,7 +4,7 @@
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-5);
   background: var(--brick);
-  color: #fff;
+  color: var(--paper);
   border: none;
   border-radius: var(--r-2);
   font-family: var(--font-mono);
