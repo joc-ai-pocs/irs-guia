@@ -46,6 +46,7 @@ export {
 export {
   ExerciciosPanel,
   type ExerciciosPanelProps,
+  type ExerciciosPanelState,
 } from './ExerciciosPanel';
 export { ResumoCard, type ResumoCardProps } from './ResumoCard';
 export {

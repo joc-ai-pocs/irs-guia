@@ -1,4 +1,5 @@
 import type { TaxYearConfig } from '@/tax-data/types';
+import type { LiquidacaoInput } from '@/engine';
 import {
   AnexosHeader,
   BracketBar,
@@ -6,6 +7,7 @@ import {
   ExerciciosPanel,
   Markdown,
   type AnexoSpec,
+  type ExerciciosPanelState,
   type VisibleGroups,
 } from '@/ui/components';
 import { h } from '@/ui/dom';
@@ -89,6 +91,33 @@ function buildAnexos(scope: VisibleGroups): readonly AnexoSpec[] {
 }
 
 /**
+ * State captured from a live Calculator so it can be re-injected into a freshly
+ * rebuilt one — the year switch (SPEC-004) rebuilds the whole App, and without
+ * this the user's typed values and chosen scope would be lost.
+ */
+export interface TabCalculadoraState {
+  readonly inputs: LiquidacaoInput;
+  readonly groups: VisibleGroups;
+}
+
+/**
+ * Optional wiring for state preservation across App reconstructions. All fields
+ * are optional so the first mount (nothing to restore) keeps the defaults.
+ */
+export interface TabCalculadoraOptions {
+  /** Inputs to pre-populate (from a previous {@link TabCalculadoraState}). */
+  readonly initialInputs?: Partial<LiquidacaoInput>;
+  /** Scope (visible anexo groups) to restore. Defaults to {@link INITIAL_SCOPE}. */
+  readonly initialGroups?: VisibleGroups;
+  /** Exercícios panel expanded/selected state to restore. */
+  readonly initialExercicios?: ExerciciosPanelState;
+  /** Notified on every recompute with the current inputs + scope. */
+  readonly onStateChange?: (state: TabCalculadoraState) => void;
+  /** Notified when the exercícios panel expanded/selected state changes. */
+  readonly onExerciciosChange?: (state: ExerciciosPanelState) => void;
+}
+
+/**
  * Tab "Calculadora" — standalone interactive simulator.
  *
  * Layout (top to bottom):
@@ -99,14 +128,22 @@ function buildAnexos(scope: VisibleGroups): readonly AnexoSpec[] {
  *        LEFT  → Calculator inputs
  *        RIGHT → BracketBar + Calculator output (breakdown) + Final result box
  *      Em mobile (<900px) colapsa para uma coluna (cálculo abaixo dos inputs).
+ *
+ * `opts` carries the state to restore after an App reconstruction (year switch)
+ * and the callbacks that report changes back up — see SPEC-004.
  */
-export function TabCalculadora(config: TaxYearConfig): HTMLElement {
+export function TabCalculadora(
+  config: TaxYearConfig,
+  opts: TabCalculadoraOptions = {},
+): HTMLElement {
   // Live scope — mutated by card clicks; passed (as a fresh frozen view) to
   // the Calculator on each toggle. Using `-readonly` so we can keep the public
   // VisibleGroups interface immutable while still letting the orchestrator
-  // mutate this local copy in response to card clicks.
+  // mutate this local copy in response to card clicks. Restored from opts when
+  // rebuilding after a year switch.
   const scope: { -readonly [K in keyof VisibleGroups]: VisibleGroups[K] } = {
     ...INITIAL_SCOPE,
+    ...(opts.initialGroups ?? {}),
   };
 
   const bracketBar = BracketBar({ escaloes: config.escaloes });
@@ -114,11 +151,17 @@ export function TabCalculadora(config: TaxYearConfig): HTMLElement {
     config,
     badge: 'Cat. A / H · Tributação individual',
     visibleGroups: scope,
+    ...(opts.initialInputs ? { initial: opts.initialInputs } : {}),
     onEscalaoChange: (numero) => bracketBar.setActive(numero),
+    // Report inputs + scope on every recompute so the orchestrator can restore
+    // them if the App is rebuilt (year switch).
+    onChange: ({ inputs }) => opts.onStateChange?.({ inputs, groups: { ...scope } }),
   });
   const exerciciosPanel = ExerciciosPanel({
     calculator,
     ano: config.ano,
+    ...(opts.initialExercicios ? { initialState: opts.initialExercicios } : {}),
+    ...(opts.onExerciciosChange ? { onStateChange: opts.onExerciciosChange } : {}),
   });
 
   const anexosHeader = AnexosHeader({
