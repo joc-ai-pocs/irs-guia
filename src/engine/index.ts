@@ -29,3 +29,4 @@ export {
   calcularMinimoExistencia,
   type DetalheMinimoExistencia,
 } from './minimoExistencia';
+export { roundCents } from './rounding';

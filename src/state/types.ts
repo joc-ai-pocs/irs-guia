@@ -1,4 +1,4 @@
-import type { LiquidacaoInput, LiquidacaoResult } from '@/engine';
+import { roundCents, type LiquidacaoInput, type LiquidacaoResult } from '@/engine';
 
 /**
  * Schema version embedded in every persisted exercício file.
@@ -55,12 +55,15 @@ export interface LiquidacaoResultSnapshot {
  * Builds a snapshot from a fresh {@link LiquidacaoResult}.
  */
 export function buildSnapshot(result: LiquidacaoResult): LiquidacaoResultSnapshot {
+  // Euro lines are rounded to cents so persisted files carry clean values
+  // (no IEEE-754 noise like `1092.7476000000001`). The taxa média efetiva is a
+  // rate, not a euro line, so it is stored raw. See `roundCents` for the policy.
   return {
-    rendimentoColetavel: result.rendimentoColetavel,
+    rendimentoColetavel: roundCents(result.rendimentoColetavel),
     escalaoNumero: result.coleta.escalao.numero,
-    coletaTotal: result.coletaTotal,
-    coletaLiquida: result.coletaLiquida,
-    impostoApurado: result.impostoApurado,
+    coletaTotal: roundCents(result.coletaTotal),
+    coletaLiquida: roundCents(result.coletaLiquida),
+    impostoApurado: roundCents(result.impostoApurado),
     taxaMediaEfetiva: result.taxaMediaEfetiva,
   };
 }

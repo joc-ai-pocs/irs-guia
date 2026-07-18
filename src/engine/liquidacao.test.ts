@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { config2025 } from '@/tax-data/2025';
 import { calcularLiquidacao } from './liquidacao';
+import { roundCents } from './rounding';
 
 // 2025 constants for reference in this file:
 //   V  (valor de referência mín. existência) = 12 180  (14 × RMMG 870)
@@ -340,6 +341,70 @@ describe('calcularLiquidacao — full settlement note pipeline', () => {
     const result = calcularLiquidacao({ rendimentoBruto: 14135.53 }, config2025);
     expect(result.deducaoEspecificaDetalhe).toBe(undefined);
     expect(result.deducaoEspecifica).toBe(4462.15);
+  });
+
+  it('clamps the net collection to its legal floor of zero when deductions exceed the collection', () => {
+    // Imputação cat. B 2 400 € → coletável 2 400 (1.º escalão, 12,5%) → coleta 300,00.
+    // Deduções à coleta 1 500 € > coleta: a coleta líquida não pode ficar negativa
+    // (art. 78.º n.º 7). O reembolso de 50 € vem só da retenção na fonte.
+    const result = calcularLiquidacao(
+      {
+        rendimentoBruto: 0,
+        imputacaoCatB: 2400,
+        deducoesColeta: 1500,
+        retencaoFonte: 50,
+      },
+      config2025,
+    );
+
+    expect(result.coletaTotal).toBe(300);
+    expect(result.coletaLiquida).toBe(0);
+    expect(result.impostoTotal).toBe(0);
+    // "a receber" reflete apenas a retenção (50 €), não coleta negativa.
+    expect(result.impostoApurado).toBe(-50);
+    // A nota explicativa é emitida com o excesso das deduções sobre a coleta.
+    expect(result.coletaLiquidaClampada !== undefined).toBe(true);
+    expect(result.coletaLiquidaClampada?.excesso).toBe(1200);
+    expect(result.coletaLiquidaClampada?.nota.includes('piso legal')).toBe(true);
+  });
+
+  it('omits the clamp note when the collection covers the deductions', () => {
+    const result = calcularLiquidacao(
+      {
+        rendimentoBruto: 0,
+        rendimentoTrabalho: 13054.76,
+        contribuicoesTrabalho: 1436.05,
+        rendimentoPensoes: 3571.62,
+        deducoesColeta: 307.97,
+        beneficioMunicipalPct: 0.01,
+      },
+      config2025,
+    );
+    expect(result.coletaLiquida).toBeGreaterThan(0);
+    expect(result.coletaLiquidaClampada).toBe(undefined);
+  });
+
+  it('rounds the settlement-note lines to cents (no IEEE-754 noise)', () => {
+    // Same inputs as the persisted `exercicio-2025-mae.json`, which historically
+    // stored `coletaTotal: 1092.7476000000001`. The engine now rounds the note
+    // lines, so the value is a clean two-decimal figure.
+    const result = calcularLiquidacao(
+      {
+        rendimentoBruto: 16626.38,
+        rendimentoTrabalho: 13054.76,
+        contribuicoesTrabalho: 1436.05,
+        rendimentoPensoes: 3571.62,
+        deducoesColeta: 307.97,
+        beneficioMunicipalPct: 0.01,
+        retencaoFonte: 103,
+      },
+      config2025,
+    );
+    const atMostTwoDecimals = (v: number) => expect(roundCents(v)).toBe(v);
+    atMostTwoDecimals(result.coletaTotal);
+    atMostTwoDecimals(result.coletaLiquida);
+    atMostTwoDecimals(result.impostoApurado);
+    expect(result.coletaTotal).toBe(1092.75);
   });
 
   it('reports an effective average rate (taxa média efetiva)', () => {

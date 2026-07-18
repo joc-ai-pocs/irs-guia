@@ -509,6 +509,12 @@ export function Calculator(props: CalculatorProps): CalculatorHandle {
         `− ${formatEUR(r.beneficioMunicipal)}`,
       ),
       row('22 Coleta líquida', formatEUR(r.coletaLiquida), { total: true }),
+      // Piso legal (art. 78.º n.º 7) — quando as deduções à coleta excedem a
+      // coleta, a líquida fica em 0 € e explicamos porquê (as deduções não geram
+      // reembolso por si só). Segue o padrão do detalhe do mínimo de existência.
+      r.coletaLiquidaClampada
+        ? h('p', { class: 'calculator__deducao-nota' }, r.coletaLiquidaClampada.nota)
+        : null,
       // Line 23 — only shown when there's something to abate (cat. B today).
       r.pagamentosConta > 0
         ? row('23 − Pagamentos por conta', `− ${formatEUR(r.pagamentosConta)}`, { gap: true })
