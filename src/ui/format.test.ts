@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { formatNumberPtPT, parseNumberPtPT } from './format';
 
+/** Normalize any Unicode space (NBSP / narrow NBSP / regular) to a plain space. */
+const norm = (s: string) => s.replace(/\s/g, ' ');
 const NBSP = String.fromCharCode(0x00a0);
 const NARROW_NBSP = String.fromCharCode(0x202f);
 
@@ -55,12 +57,13 @@ describe('parseNumberPtPT — pt-PT number input parsing', () => {
 });
 
 describe('formatNumberPtPT — pt-PT number display', () => {
-  it('uses a comma decimal with up to two places (grouping is optional)', () => {
-    // The thousands separator is environment-dependent: browsers group pt-PT
-    // with a space ("1 436,05"), but Node's ICU here may omit it ("1436,05").
-    // Strip whatever grouping char is used and assert the digits + comma. The
-    // visible "1 436,05" grouping is confirmed in the browser verification.
-    expect(formatNumberPtPT(1436.05).replace(/\s/g, '')).toBe('1436,05');
+  it('groups thousands and uses a comma decimal, up to two places', () => {
+    // Normalize the grouping char (ICU may emit NBSP / narrow NBSP) but DO
+    // assert it is there: `useGrouping: true` must defeat ICU's pt-PT "min2"
+    // default, which would otherwise leave 4-digit values ungrouped.
+    expect(norm(formatNumberPtPT(1436.05))).toBe('1 436,05');
+    expect(norm(formatNumberPtPT(13054.76))).toBe('13 054,76');
+    expect(norm(formatNumberPtPT(1000000.5))).toBe('1 000 000,5');
     expect(formatNumberPtPT(320)).toBe('320');
     expect(formatNumberPtPT(0)).toBe('0');
   });

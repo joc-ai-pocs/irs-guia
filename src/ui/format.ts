@@ -14,9 +14,18 @@ const PCT_FORMATTER = new Intl.NumberFormat('pt-PT', {
   maximumFractionDigits: 2,
 });
 
-/** Plain number in pt-PT — grouped thousands, up to 2 decimals, no currency. */
+/**
+ * Plain number in pt-PT — grouped thousands, up to 2 decimals, no currency.
+ *
+ * `useGrouping: true` ("always") is explicit on purpose: modern ICU defaults
+ * pt-PT to "min2", which suppresses the separator when the leading group has a
+ * single digit — so 1436,05 would render as "1436,05" while 13054,76 renders as
+ * "13 054,76". SPEC-005 requires the blur to re-render `1.436,05` as
+ * "1 436,05", so grouping must not depend on the magnitude.
+ */
 const NUMBER_FORMATTER = new Intl.NumberFormat('pt-PT', {
   maximumFractionDigits: 2,
+  useGrouping: true,
 });
 
 export function formatEUR(value: number): string {
