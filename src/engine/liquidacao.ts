@@ -14,6 +14,7 @@ import {
   type DuracaoContratoF,
 } from './categoriaF';
 import { calcularMinimoExistencia, type DetalheMinimoExistencia } from './minimoExistencia';
+import { roundCents } from './rounding';
 
 /**
  * Inputs for a settlement-note-style calculation.
@@ -159,6 +160,22 @@ export interface LiquidacaoResult {
   readonly deducoesColeta: number;
   readonly beneficioMunicipal: number;
   readonly coletaLiquida: number;
+  /**
+   * Present only when the net collection (linha 22) was clamped up to its legal
+   * floor of zero — i.e. the deductions to the collection (+ municipal benefit)
+   * exceeded the total collection (art. 78.º n.º 7 CIRS: as deduções à coleta
+   * não podem, por si só, gerar imposto negativo). Explains that any reembolso
+   * comes from the withholdings/pagamentos por conta, never from deductions
+   * turning the collection negative. Follows the same "detalhe" pattern as
+   * {@link abatimentoMinimoExistenciaDetalhe} so the UI can render an
+   * explanation. Omitted when no clamp was needed.
+   */
+  readonly coletaLiquidaClampada?: {
+    /** How much the deductions + benefit exceeded the total collection (€). */
+    readonly excesso: number;
+    /** Human-readable explanation for the settlement-note UI. */
+    readonly nota: string;
+  };
 
   /**
    * Cat. F (rendimentos prediais) sub-result. Present only when the input
@@ -359,7 +376,10 @@ export function calcularLiquidacao(
   // lines 11–17 — coleta da tabela progressiva (art. 68.º), multiplicada de
   // volta pelo quociente familiar.
   const coleta = calcularColetaMetodo3(baseParaTaxa, config);
-  const coletaProgressiva = coleta.coleta * quocienteFamiliar;
+  // Note line "coleta" — rounded to cents (see roundCents policy). The nested
+  // {@link ColetaResult} keeps its raw, per-declarante sub-values for the
+  // pedagogical breakdown; this is the post-quociente figure the note prints.
+  const coletaProgressiva = roundCents(coleta.coleta * quocienteFamiliar);
 
   // line 16 — imposto de tributações autónomas (cat. F, art. 72.º). Só quando o
   // englobamento está OFF; com englobamento o rendimento predial já está dentro
@@ -372,7 +392,7 @@ export function calcularLiquidacao(
   // line 18 — coleta total = coleta progressiva + tributações autónomas.
   // Espelha a nota da AT, onde "Imposto de tribut. autónomas" entra na "Coleta
   // total" (antes das deduções à coleta).
-  const coletaTotal = coletaProgressiva + coletaAutonomaCatF;
+  const coletaTotal = roundCents(coletaProgressiva + coletaAutonomaCatF);
 
   // lines 19–22 — coleta líquida.
   // As deduções à coleta abatem à coleta total (inclui a tributação autónoma).
@@ -381,7 +401,24 @@ export function calcularLiquidacao(
   // autónoma — pelo que a sua base é a coleta progressiva após deduções.
   const baseBeneficioMunicipal = Math.max(0, coletaProgressiva - deducoesColeta);
   const beneficioMunicipal = baseBeneficioMunicipal * beneficioMunicipalPct;
-  const coletaLiquida = coletaTotal - deducoesColeta - beneficioMunicipal;
+  // Piso legal: as deduções à coleta (+ benefício municipal) não podem, por si
+  // só, tornar a coleta negativa (art. 78.º n.º 7 CIRS). Sem este limite, um
+  // rendimento baixo com deduções elevadas (ex.: pensionista com muita despesa
+  // de saúde) geraria uma coleta líquida negativa e um "a receber" fictício —
+  // os reembolsos vêm da retenção/pagamentos por conta, não de coleta negativa.
+  const coletaLiquidaSemPiso = coletaTotal - deducoesColeta - beneficioMunicipal;
+  const coletaLiquida = roundCents(Math.max(0, coletaLiquidaSemPiso));
+  const coletaLiquidaClampada =
+    coletaLiquidaSemPiso < 0
+      ? {
+          excesso: roundCents(-coletaLiquidaSemPiso),
+          nota:
+            'As deduções à coleta (e o benefício municipal) excederam a coleta total, ' +
+            'pelo que a coleta líquida fica no piso legal de 0 € (art. 78.º n.º 7 CIRS): ' +
+            'as deduções à coleta não podem, por si só, gerar reembolso. Um eventual ' +
+            'valor a receber resulta apenas da retenção na fonte e dos pagamentos por conta.',
+        }
+      : undefined;
 
   // Imposto total do período — a tributação autónoma já está dentro de
   // coletaLiquida (somada à coleta total), pelo que coincide com ela.
@@ -396,7 +433,7 @@ export function calcularLiquidacao(
 
   // line 25 — imposto apurado (negativo = reembolso). Pagamentos por conta
   // come off first (line 23), then the retentions (line 24).
-  const impostoApurado = impostoTotal - pagamentosConta - retencaoTotal;
+  const impostoApurado = roundCents(impostoTotal - pagamentosConta - retencaoTotal);
 
   // derived: now uses impostoTotal so cat. F contribution is visible in the
   // effective average rate. rendimentoBruto already includes cat. B imputado
@@ -441,6 +478,7 @@ export function calcularLiquidacao(
     deducoesColeta,
     beneficioMunicipal,
     coletaLiquida,
+    ...(coletaLiquidaClampada ? { coletaLiquidaClampada } : {}),
     ...(catF ? { catF } : {}),
     impostoTotal,
     ...(catB ? { catB } : {}),

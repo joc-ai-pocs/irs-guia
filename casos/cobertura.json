@@ -137,6 +137,20 @@
         "impostoTotal": 1202.49,
         "impostoApurado": 1202.49
       }
+    },
+    {
+      "nome": "Deduções à coleta acima da coleta — líquida no piso legal de 0 (art. 78.º n.º 7)",
+      "ano": 2025,
+      "notas": "Imputação cat. B de 2 400 € → coletável 2 400 (1.º escalão, 12,5%) → coleta 300,00. As deduções à coleta de 1 500 € excedem a coleta: a coleta líquida NÃO passa a negativa, fica em 0. O reembolso de 50 € reflete apenas a retenção na fonte, não coleta negativa.",
+      "input": { "rendimentoBruto": 0, "imputacaoCatB": 2400, "deducoesColeta": 1500, "retencaoFonte": 50 },
+      "esperado": {
+        "rendimentoColetavel": 2400,
+        "coleta.escalao.numero": 1,
+        "coletaTotal": 300.00,
+        "coletaLiquida": 0,
+        "impostoTotal": 0,
+        "impostoApurado": -50
+      }
     }
   ]
 }
