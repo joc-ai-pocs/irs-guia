@@ -20,14 +20,39 @@
 import '@/styles/base.css';
 
 import type { TaxYearConfig } from '@/tax-data/types';
+import type { LiquidacaoInput } from '@/engine';
 import { TAX_YEARS, getTaxYearConfig, listTaxYearConfigs, requireFonte } from '@/tax-data';
-import { Hero, TabsNav, Footer, YearSelector, ThemeToggle } from '@/ui/components';
+import {
+  Hero,
+  TabsNav,
+  Footer,
+  YearSelector,
+  ThemeToggle,
+  type ExerciciosPanelState,
+  type VisibleGroups,
+} from '@/ui/components';
 import { h, mount } from '@/ui/dom';
 import { TabGuia } from '@/ui/sections/TabGuia';
 import { TabResumo } from '@/ui/sections/TabResumo';
 import { TabRecursos } from '@/ui/sections/TabRecursos';
 import { TabCalculadora } from '@/ui/sections/TabCalculadora';
 import { formatEUR } from '@/ui/format';
+
+/**
+ * Live calculator state, kept at module scope so it survives the full-App
+ * rebuild triggered by a year switch (SPEC-004). It is fed by the Calculadora
+ * tab's `onStateChange`/`onExerciciosChange` callbacks on every change and read
+ * back as the `initial*` props whenever the tab is (re)built. On first load it
+ * is empty, so the Calculator keeps its hardcoded defaults.
+ */
+interface CalcTabState {
+  inputs?: LiquidacaoInput;
+  groups?: VisibleGroups;
+  exercicios: ExerciciosPanelState;
+}
+const calcTabState: CalcTabState = {
+  exercicios: { expanded: false, activeName: null },
+};
 
 /**
  * Default income year: the most recent year whose values are verified
@@ -102,7 +127,24 @@ function App(config: TaxYearConfig, activeTab?: string): HTMLElement {
     defaultTab: activeTab ?? 'guia',
     tabs: [
       { id: 'guia', label: 'Guia completo', render: () => TabGuia(config) },
-      { id: 'calculadora', label: 'Calculadora', render: () => TabCalculadora(config) },
+      {
+        id: 'calculadora',
+        label: 'Calculadora',
+        render: () =>
+          TabCalculadora(config, {
+            // Restore whatever the user had before the last rebuild (year switch).
+            ...(calcTabState.inputs ? { initialInputs: calcTabState.inputs } : {}),
+            ...(calcTabState.groups ? { initialGroups: calcTabState.groups } : {}),
+            initialExercicios: calcTabState.exercicios,
+            onStateChange: (s) => {
+              calcTabState.inputs = s.inputs;
+              calcTabState.groups = s.groups;
+            },
+            onExerciciosChange: (s) => {
+              calcTabState.exercicios = s;
+            },
+          }),
+      },
       { id: 'resumo', label: 'Resumo navegável', render: () => TabResumo() },
       { id: 'recursos', label: 'Recursos e fontes', render: () => TabRecursos() },
     ],

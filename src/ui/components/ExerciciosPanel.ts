@@ -16,6 +16,20 @@ import {
 } from '@/state/types';
 import './ExerciciosPanel.css';
 
+/**
+ * The slice of panel state that must survive an App reconstruction (e.g. the
+ * year switch, which rebuilds the whole tree). The directory connection itself
+ * is recovered automatically by {@link detectInitialState} from the persisted
+ * handle; what would otherwise be lost is the expanded/collapsed state and the
+ * currently-selected exercício, so those are lifted out via props + callback.
+ */
+export interface ExerciciosPanelState {
+  /** Whether the panel body is expanded. */
+  readonly expanded: boolean;
+  /** Name of the exercício currently selected in the list, if any. */
+  readonly activeName: string | null;
+}
+
 export interface ExerciciosPanelProps {
   /** The Calculator instance this panel reads/writes inputs from. */
   readonly calculator: CalculatorHandle;
@@ -26,6 +40,16 @@ export interface ExerciciosPanelProps {
    * (e.g. deterministic tests). Defaults to `new Date().toISOString()`.
    */
   readonly now?: () => string;
+  /**
+   * Initial expanded/selected state, used to restore the panel across an App
+   * reconstruction. Defaults to collapsed with nothing selected.
+   */
+  readonly initialState?: ExerciciosPanelState;
+  /**
+   * Notified whenever the expanded/selected state changes, so a parent can
+   * persist it and feed it back through {@link initialState} on the next mount.
+   */
+  readonly onStateChange?: (state: ExerciciosPanelState) => void;
 }
 
 /**
@@ -41,11 +65,16 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
   const root = h('section', { class: 'exercicios-panel' });
   let state: StorageState = { kind: 'disconnected' };
   /** The name currently selected/active in the list (if any). */
-  let activeName: string | null = null;
-  /** Whether the panel body is expanded. Defaults to collapsed. */
-  let expanded = false;
+  let activeName: string | null = props.initialState?.activeName ?? null;
+  /** Whether the panel body is expanded. Restored from props (default collapsed). */
+  let expanded = props.initialState?.expanded ?? false;
   /** Last known items list — used so collapse/expand doesn't trigger a refetch. */
   let lastItems: readonly Exercicio[] = [];
+
+  /** Report the persistable state upward so it survives a reconstruction. */
+  function emitState(): void {
+    props.onStateChange?.({ expanded, activeName });
+  }
 
   function render(items?: readonly Exercicio[]): void {
     if (items !== undefined) lastItems = items;
@@ -77,6 +106,7 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
     );
     btn.addEventListener('click', () => {
       expanded = !expanded;
+      emitState();
       render();
     });
     return btn;
@@ -244,6 +274,7 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
   function load(ex: Exercicio): void {
     props.calculator.setInputs(ex.inputs);
     activeName = ex.nome;
+    emitState();
     void refresh();
     // Scroll the calculator into view for visual feedback that something happened.
     props.calculator.element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -268,6 +299,7 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
     try {
       await s.storage.save(exercicio);
       activeName = trimmed;
+      emitState();
       await refresh();
     } catch (err) {
       alert(`Falha a guardar: ${(err as Error).message}`);
@@ -308,6 +340,7 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
     try {
       await s.storage.save(copy);
       activeName = trimmed;
+      emitState();
       await refresh();
     } catch (err) {
       alert(`Falha a duplicar: ${(err as Error).message}`);
@@ -318,7 +351,10 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
     if (!window.confirm(`Apagar “${ex.nome}”? Esta ação não pode ser revertida.`)) return;
     try {
       await s.storage.remove(ex.nome);
-      if (activeName === ex.nome) activeName = null;
+      if (activeName === ex.nome) {
+        activeName = null;
+        emitState();
+      }
       await refresh();
     } catch (err) {
       alert(`Falha a apagar: ${(err as Error).message}`);
@@ -328,6 +364,7 @@ export function ExerciciosPanel(props: ExerciciosPanelProps): HTMLElement {
   async function disconnectDir(): Promise<void> {
     state = await disconnect();
     activeName = null;
+    emitState();
     render();
   }
 
